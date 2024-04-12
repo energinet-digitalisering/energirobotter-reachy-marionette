@@ -2,6 +2,8 @@
 
 Copies poses of robot rig in Blender to physical (or simulated) Reachy robot.
 
+![ReachyMarionetteGif](docs/ReachyMarionette.gif)
+
 <!-- vscode-markdown-toc -->
 * 1. [Requirements](#Requirements)
 * 2. [Setup](#Setup)
@@ -17,8 +19,6 @@ Copies poses of robot rig in Blender to physical (or simulated) Reachy robot.
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
-
-
 
 ##  1. <a name='Requirements'></a>Requirements
 *Tested with Windows 11.*
