@@ -56,7 +56,9 @@ Navigate to the addon Zip file, click `Install Add-on`.
 
 Start robot (physical or Unity simulation).
 
-In Blender, find the `ReachyMarionette` tab in the N Panel (if not visible press `N`).
+In Blender, open file with a rigged Reachy model.
+
+Find the `ReachyMarionette` tab in the N Panel (if not visible press `N`).
 
 Enter the [IP adress of Reachy](https://docs.pollen-robotics.com/sdk/getting-started/finding-ip/), or if Reachy is simulated with Unity use `localhost`.
 
