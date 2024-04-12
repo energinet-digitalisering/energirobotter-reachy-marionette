@@ -1,0 +1,2 @@
+fake-bpy-module
+reachy-sdk
