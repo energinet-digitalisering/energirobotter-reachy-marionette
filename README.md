@@ -21,12 +21,14 @@ Copies poses of robot rig in Blender to physical (or simulated) Reachy robot.
 <!-- /vscode-markdown-toc -->
 
 ##  1. <a name='Requirements'></a>Requirements
-*Tested with Windows 11.*
-
-- Unity <= 2022.3.15f1
-- Blender <= 4.1
+Tested with:
+- Windows 11
+- Blender >= 4.1
+- Unity >= 2022.3.15f1
 - VSCode
 - Python == 3.9.7
+
+To simply use the addon, only Blender and a Reachy robot (real or simulated with Unity) is required.
 
 
 ##  2. <a name='Setup'></a>Setup 
