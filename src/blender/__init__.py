@@ -6,7 +6,7 @@ from .reachy_marionette import ReachyMarionette
 # Addon metadata
 bl_info = {
     "name": "ReachyMarionette",
-            "author": "Drone Consulting",
+            "author": "Energinet",
             "version": (1, 0, 0),
             "blender": (4, 0, 1),
             "location": "Toolbar > ReachyMarionette",
