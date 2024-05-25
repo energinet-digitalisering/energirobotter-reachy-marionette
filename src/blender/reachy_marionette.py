@@ -13,9 +13,12 @@ from reachy_sdk.trajectory.interpolation import InterpolationMode
 class ReachyMarionette():
 
     def __init__(self):
+
         self.reachy = None
         self.is_streaming = False
         self.threads = []
+
+        self.stream_interval = 2.0
 
     def __del__(self):
         self.stream_angles_disable()
@@ -138,15 +141,15 @@ class ReachyMarionette():
 
         goto(
             goal_positions=joint_angles,
-            duration=1.0,
+            # Duration is faster than the interval, to finish before the next thread
+            duration=self.stream_interval * 0.5,
             interpolation_mode=InterpolationMode.MINIMUM_JERK
         )
 
     def stream_angles(self, report_function):
         if self.is_streaming:
             self.send_angles(report_function)
-            # TODO: magic number! (seconds till next function call)
-            return 2.0
+            return self.stream_interval  # Seconds till next function call
         else:
             return None
 
