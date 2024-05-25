@@ -1,6 +1,7 @@
 import mathutils
 import numpy as np
 import functools
+import threading
 
 import bpy
 from reachy_sdk import ReachySDK
@@ -14,6 +15,13 @@ class ReachyMarionette():
     def __init__(self):
         self.reachy = None
         self.is_streaming = False
+        self.threads = []
+
+    def __del__(self):
+        self.stream_angles_disable()
+
+        for thread in self.threads:
+            thread.join()
 
     # Helper functions from rigify plugin
     def get_pose_matrix_in_other_space(self, mat, pose_bone):
@@ -121,8 +129,15 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: self.angle_of_bone("gripper.L"),
         }
 
+        thread = threading.Thread(
+            target=self.reachy_goto, args=[joint_angle_positions])
+        self.threads.append(thread)
+        thread.start()
+
+    def reachy_goto(self, joint_angles):
+
         goto(
-            goal_positions=joint_angle_positions,
+            goal_positions=joint_angles,
             duration=1.0,
             interpolation_mode=InterpolationMode.MINIMUM_JERK
         )
@@ -136,11 +151,16 @@ class ReachyMarionette():
             return None
 
     def stream_angles_enable(self, report_function):
-        self.is_streaming = True
 
-        # Create Blender timer
-        bpy.app.timers.register(functools.partial(
-            self.stream_angles, report_function))
+        if not self.is_streaming:
+            self.is_streaming = True
+
+            # Create Blender timer
+            bpy.app.timers.register(functools.partial(
+                self.stream_angles, report_function))
+
+        else:
+            report_function({'INFO'}, "Streaming is already on progress")
 
     def stream_angles_disable(self):
         self.is_streaming = False
