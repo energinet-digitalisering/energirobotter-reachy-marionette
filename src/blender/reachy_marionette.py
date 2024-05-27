@@ -112,7 +112,7 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "No Reachy is connected")
 
-    def send_angles(self, report_function):
+    def send_angles(self, report_function, duration=1.0, threaded=False):
 
         if self.reachy == None:
             report_function({'ERROR'}, "Reachy not connected!")
@@ -143,11 +143,14 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: self.angle_of_bone("gripper.L"),
         }
 
-        # Duration is faster than the interval, to finish before the next thread
-        thread = threading.Thread(
-            target=self.reachy_goto, args=[joint_angle_positions, self.stream_interval * 0.5])
-        self.threads.append(thread)
-        thread.start()
+        if threaded:
+            thread = threading.Thread(
+                target=self.reachy_goto, args=[joint_angle_positions, duration])
+            self.threads.append(thread)
+            thread.start()
+
+        else:
+            self.reachy_goto(joint_angle_positions, duration)
 
     def reachy_goto(self, joint_angles, duration=1.0):
 
@@ -158,8 +161,10 @@ class ReachyMarionette():
         )
 
     def stream_angles(self, report_function):
-            self.send_angles(report_function)
         if self.state == State.STREAMING:
+            # Duration is faster than the interval, to finish before the next thread
+            self.send_angles(
+                report_function, duration=self.stream_interval * 0.5, threaded=True)
             return self.stream_interval  # Seconds till next function call
         else:
             return None
@@ -174,7 +179,7 @@ class ReachyMarionette():
                 self.stream_angles, report_function))
 
         else:
-            report_function({'INFO'}, "Streaming is already on progress")
+            report_function({'INFO'}, "Streaming is already in progress,")
 
 
     def reachy_reset_pose(self):
