@@ -1,6 +1,7 @@
 import mathutils
 import numpy as np
 import functools
+import threading
 
 import bpy
 from reachy_sdk import ReachySDK
@@ -12,8 +13,18 @@ from reachy_sdk.trajectory.interpolation import InterpolationMode
 class ReachyMarionette():
 
     def __init__(self):
+
         self.reachy = None
         self.is_streaming = False
+        self.threads = []
+
+        self.stream_interval = 2.0
+
+    def __del__(self):
+        self.stream_angles_disable()
+
+        for thread in self.threads:
+            thread.join()
 
     # Helper functions from rigify plugin
     def get_pose_matrix_in_other_space(self, mat, pose_bone):
@@ -121,26 +132,38 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: self.angle_of_bone("gripper.L"),
         }
 
+        # Duration is faster than the interval, to finish before the next thread
+        thread = threading.Thread(
+            target=self.reachy_goto, args=[joint_angle_positions, self.stream_interval * 0.5])
+        self.threads.append(thread)
+        thread.start()
+
+    def reachy_goto(self, joint_angles, duration=1.0):
+
         goto(
-            goal_positions=joint_angle_positions,
-            duration=1.0,
+            goal_positions=joint_angles,
+            duration=duration,
             interpolation_mode=InterpolationMode.MINIMUM_JERK
         )
 
     def stream_angles(self, report_function):
         if self.is_streaming:
             self.send_angles(report_function)
-            # TODO: magic number! (seconds till next function call)
-            return 2.0
+            return self.stream_interval  # Seconds till next function call
         else:
             return None
 
     def stream_angles_enable(self, report_function):
-        self.is_streaming = True
 
-        # Create Blender timer
-        bpy.app.timers.register(functools.partial(
-            self.stream_angles, report_function))
+        if not self.is_streaming:
+            self.is_streaming = True
+
+            # Create Blender timer
+            bpy.app.timers.register(functools.partial(
+                self.stream_angles, report_function))
+
+        else:
+            report_function({'INFO'}, "Streaming is already on progress")
 
     def stream_angles_disable(self):
         self.is_streaming = False

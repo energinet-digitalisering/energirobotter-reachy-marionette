@@ -78,17 +78,18 @@ Alternatively, it is recommended to use a virtual environment, like pipenv or An
 pipenv install
 ```
 
-Open VSCode and download the extension `Blender Development` by Jaques Lucke. 
+In VSCode download the extension `Blender Development` by Jaques Lucke. 
 
 ###  4.1. <a name='BlenderDeployment'></a>Blender Deployment
 
-> If addon is installed through `.zip` file, disable it first.
+> If addon is already installed normally in Blender through `.zip` file, disable it first.
 
 Activate pipenv from terminal and open VSCode:
 ```
 pipenv shell
 code ./<subfolder>
 ```
+> NOTE: You must open VSCode in the same directory as the `__init__.py` file, otherwise the extension won't see the addon. 
 
 Start Blender  from VSCode with `Ctrl + Shift + P` and search for `Blender: Start`. Use the location of your Blender install. 
 > If there is an error, check out [this video](https://youtu.be/YUytEtaVrrc?t=469) for how to fix it.
