@@ -136,7 +136,7 @@ class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
 
     def modal(self, context, event):
         if event.type == 'ESC':
-            reachy.stream_angles_disable()
+            reachy.set_state_idle()
 
             self.report({'INFO'}, "ESC key pressed, stopping stream")
             return {'FINISHED'}

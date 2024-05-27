@@ -1,3 +1,4 @@
+from enum import Enum
 import mathutils
 import numpy as np
 import functools
@@ -10,12 +11,18 @@ from reachy_sdk.trajectory import goto
 from reachy_sdk.trajectory.interpolation import InterpolationMode
 
 
+class State(Enum):
+    IDLE = 1
+    STREAMING = 2
+    ANIMATING = 3
+
+
 class ReachyMarionette():
 
     def __init__(self):
 
         self.reachy = None
-        self.is_streaming = False
+        self.state = State.IDLE
         self.threads = []
 
         self.stream_interval = 2.0
@@ -26,7 +33,11 @@ class ReachyMarionette():
         for thread in self.threads:
             thread.join()
 
+    def set_state_idle(self):
+        self.state == State.IDLE
+
     # Helper functions from rigify plugin
+
     def get_pose_matrix_in_other_space(self, mat, pose_bone):
         """ Returns the transform matrix relative to pose_bone's current
         transform space. In other words, presuming that mat is in
@@ -147,16 +158,16 @@ class ReachyMarionette():
         )
 
     def stream_angles(self, report_function):
-        if self.is_streaming:
             self.send_angles(report_function)
+        if self.state == State.STREAMING:
             return self.stream_interval  # Seconds till next function call
         else:
             return None
 
     def stream_angles_enable(self, report_function):
 
-        if not self.is_streaming:
-            self.is_streaming = True
+        if not self.state == State.STREAMING:
+            self.state = State.STREAMING
 
             # Create Blender timer
             bpy.app.timers.register(functools.partial(
@@ -165,8 +176,6 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "Streaming is already on progress")
 
-    def stream_angles_disable(self):
-        self.is_streaming = False
 
     def reachy_reset_pose(self):
         joint_angle_positions = {
