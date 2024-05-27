@@ -132,17 +132,17 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: self.angle_of_bone("gripper.L"),
         }
 
+        # Duration is faster than the interval, to finish before the next thread
         thread = threading.Thread(
-            target=self.reachy_goto, args=[joint_angle_positions])
+            target=self.reachy_goto, args=[joint_angle_positions, self.stream_interval * 0.5])
         self.threads.append(thread)
         thread.start()
 
-    def reachy_goto(self, joint_angles):
+    def reachy_goto(self, joint_angles, duration=1.0):
 
         goto(
             goal_positions=joint_angles,
-            # Duration is faster than the interval, to finish before the next thread
-            duration=self.stream_interval * 0.5,
+            duration=duration,
             interpolation_mode=InterpolationMode.MINIMUM_JERK
         )
 
