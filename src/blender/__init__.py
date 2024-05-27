@@ -110,7 +110,7 @@ class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
 
 
 class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
-    # Get angles form Blender rig, and send to Reachy
+    # Get angles from Blender rig, and send to Reachy
 
     bl_idname = "object.send_pose"
     bl_label = "Send current pose once"
@@ -122,8 +122,8 @@ class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class REACHYMARIONETTE_OT_StreamAngles(bpy.types.Operator):
-    # Continously get angles form Blender rig, and stream to Reachy
+class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
+    # Continously get angles from Blender rig, and stream to Reachy
 
     bl_idname = "object.stream_angles"
     bl_label = "Live streaming of bone angles"
@@ -177,7 +177,7 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         layout.row().operator(REACHYMARIONETTE_OT_SendPose.bl_idname,
                               text="Send Pose", icon='ARMATURE_DATA')
 
-        layout.row().operator(REACHYMARIONETTE_OT_StreamAngles.bl_idname,
+        layout.row().operator(REACHYMARIONETTE_OT_StreamPose.bl_idname,
                               text="Stream Pose", icon='ARMATURE_DATA')
 
 
@@ -186,7 +186,7 @@ classes = (
     REACHYMARIONETTE_OT_ConnectReachy,
     REACHYMARIONETTE_OT_DisconnectReachy,
     REACHYMARIONETTE_OT_SendPose,
-    REACHYMARIONETTE_OT_StreamAngles,
+    REACHYMARIONETTE_OT_StreamPose,
     REACHYMARIONETTE_PT_Panel
 )
 
