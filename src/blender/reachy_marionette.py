@@ -181,6 +181,32 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "Streaming is already in progress,")
 
+    def animate_angles_enable(self, report_function):
+
+        if not self.state == State.ANIMATING:
+            self.state = State.ANIMATING
+
+            frame_prev = 0
+            bpy.data.scenes['Scene'].show_keys_from_selected_only = False
+            bpy.data.scenes['Scene'].frame_set(frame_prev)
+
+            # Get to initial pose
+            self.send_angles(report_function, duration=1.0, threaded=False)
+
+            # Iterate through all keyframes
+            while (bpy.ops.screen.keyframe_jump(next=True) == {'FINISHED'} and self.state == State.ANIMATING):
+
+                frame_diff = bpy.data.scenes['Scene'].frame_current - frame_prev
+                duration = frame_diff / bpy.context.scene.render.fps
+                frame_prev = bpy.data.scenes['Scene'].frame_current
+
+                # Wait for movement to complete before moving on to next keyframe
+                self.send_angles(report_function, duration, threaded=False)
+
+            self.state = State.IDLE
+
+        else:
+            report_function({'INFO'}, "Animation is already in progress,")
 
     def reachy_reset_pose(self):
         joint_angle_positions = {
