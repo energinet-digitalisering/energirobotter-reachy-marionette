@@ -124,9 +124,9 @@ class ReachyMarionette():
 
         joint_angle_positions = {
             # Right arm
-            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R"),
+            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R") * (-1),
             self.reachy.r_arm.r_shoulder_roll: self.angle_of_bone("shoulder_roll.R"),
-            self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R"),
+            self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R") * (-1),
             self.reachy.r_arm.r_elbow_pitch: self.angle_of_bone("elbow_pitch.R"),
             self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R"),
             self.reachy.r_arm.r_wrist_pitch: self.angle_of_bone("wrist_pitch.R"),
@@ -135,7 +135,7 @@ class ReachyMarionette():
             # Left arm
             self.reachy.l_arm.l_shoulder_pitch: self.angle_of_bone("shoulder_pitch.L"),
             self.reachy.l_arm.l_shoulder_roll: self.angle_of_bone("shoulder_roll.L"),
-            self.reachy.l_arm.l_arm_yaw: self.angle_of_bone("shoulder_yaw.L"),
+            self.reachy.l_arm.l_arm_yaw: self.angle_of_bone("shoulder_yaw.L") * (-1),
             self.reachy.l_arm.l_elbow_pitch: self.angle_of_bone("elbow_pitch.L"),
             self.reachy.l_arm.l_forearm_yaw: self.angle_of_bone("forearm_yaw.L"),
             self.reachy.l_arm.l_wrist_pitch: self.angle_of_bone("wrist_pitch.L"),
