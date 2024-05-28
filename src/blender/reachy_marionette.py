@@ -28,7 +28,7 @@ class ReachyMarionette():
         self.stream_interval = 2.0
 
     def __del__(self):
-        self.stream_angles_disable()
+        self.set_state_idle()
 
         for thread in self.threads:
             thread.join()
