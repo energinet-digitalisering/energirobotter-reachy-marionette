@@ -86,7 +86,7 @@ class SceneProperties(bpy.types.PropertyGroup):
 
 class REACHYMARIONETTE_OT_ConnectReachy(bpy.types.Operator):
     # Handling connection to Reachy
-    bl_idname = "object.connect_reachy"
+    bl_idname = "reachy_marionette.connect_reachy"
     bl_label = "Connect to Reachy Robot via IP-adress"
 
     def execute(self, context):
@@ -99,7 +99,7 @@ class REACHYMARIONETTE_OT_ConnectReachy(bpy.types.Operator):
 
 class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
     # Handling connection to Reachy
-    bl_idname = "object.disconnect_reachy"
+    bl_idname = "reachy_marionette.disconnect_reachy"
     bl_label = "Disconnect current connection to Reachy"
 
     def execute(self, context):
@@ -112,7 +112,7 @@ class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
 class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
     # Get angles from Blender rig, and send to Reachy
 
-    bl_idname = "object.send_pose"
+    bl_idname = "reachy_marionette.send_pose"
     bl_label = "Send current pose once"
 
     def execute(self, context):
@@ -125,7 +125,7 @@ class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
 class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
     # Continously get angles from Blender rig, and stream to Reachy
 
-    bl_idname = "object.stream_angles"
+    bl_idname = "reachy_marionette.stream_angles"
     bl_label = "Live streaming of bone angles"
 
     def __init__(self):
@@ -154,7 +154,7 @@ class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
 class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
     # Go through animation timeline and get angles from Blender rig, and send to Reachy
 
-    bl_idname = "object.animate_pose"
+    bl_idname = "reachy_marionette.animate_pose"
     bl_label = "Go through animation timeline and send poses"
 
     def __init__(self):
