@@ -1,3 +1,8 @@
+import os
+import platform
+import subprocess
+import sys
+
 import bpy
 from bpy.utils import register_class, unregister_class
 
@@ -15,20 +20,12 @@ bl_info = {
 }
 
 # Install missing packages to Blenders Python install
-try:
-    import reachy_sdk
 
-except:
-    import os
-    import pip
-    import platform
-    import subprocess
-    import sys
 
-    print("No reachy_sdk module found, installing with pip...")
+def install_packages(packages):
 
     if platform.system() == 'win32':
-        print("Installing on Windows...")
+
         python_exe = os.path.join(sys.prefix, 'bin', 'python.exe')
         target = os.path.join(sys.prefix, 'lib', 'site-packages')
 
@@ -36,15 +33,28 @@ except:
         subprocess.call(
             [python_exe, '-m', 'pip', 'install', '--upgrade', 'pip'])
 
-        subprocess.call([python_exe, '-m', 'pip', 'install',
-                        '--upgrade', 'reachy-sdk', '-t', target])
+        for package in packages:
+            subprocess.call([python_exe, '-m', 'pip', 'install',
+                            '--upgrade', package, '-t', target])
 
     else:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", 'reachy-sdk'])
+        for package in packages:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", package])
 
+
+try:
+    import openai
     import reachy_sdk
-    print("Done installing reachy_sdk")
+
+except:
+    print("openai and/or reachy_sdk module not found, installing with pip...")
+
+    install_packages(['openai', 'reachy-sdk'])
+
+    import openai
+    import reachy_sdk
+    print("Done installing packages")
 
 
 # Global object
