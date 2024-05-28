@@ -181,7 +181,7 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "Streaming is already in progress,")
 
-    def animate_angles_enable(self, report_function):
+    def animate_angles(self, report_function):
 
         if not self.state == State.ANIMATING:
             self.state = State.ANIMATING

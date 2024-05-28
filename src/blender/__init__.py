@@ -175,7 +175,7 @@ class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
     def invoke(self, context, event):
         context.window_manager.modal_handler_add(self)
 
-        reachy.animate_angles_enable(self.report)
+        reachy.animate_angles(self.report)
 
         return {'RUNNING_MODAL'}
 
