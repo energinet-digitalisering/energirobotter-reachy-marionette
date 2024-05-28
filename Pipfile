@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 fake-bpy-module = "*"
 reachy-sdk = "*"
+openai = "*"
 
 [dev-packages]
 
