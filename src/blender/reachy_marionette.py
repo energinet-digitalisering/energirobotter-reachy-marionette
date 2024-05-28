@@ -112,6 +112,14 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "No Reachy is connected")
 
+    def reachy_goto(self, joint_angles, duration=1.0):
+
+        goto(
+            goal_positions=joint_angles,
+            duration=duration,
+            interpolation_mode=InterpolationMode.MINIMUM_JERK
+        )
+
     def send_angles(self, report_function, duration=1.0, threaded=False):
 
         if self.reachy == None:
@@ -151,14 +159,6 @@ class ReachyMarionette():
 
         else:
             self.reachy_goto(joint_angle_positions, duration)
-
-    def reachy_goto(self, joint_angles, duration=1.0):
-
-        goto(
-            goal_positions=joint_angles,
-            duration=duration,
-            interpolation_mode=InterpolationMode.MINIMUM_JERK
-        )
 
     def stream_angles(self, report_function):
         if self.state == State.STREAMING:
@@ -209,7 +209,7 @@ class ReachyMarionette():
             report_function({'INFO'}, "Animation is already in progress,")
 
     def reachy_reset_pose(self):
-        joint_angle_positions = {
+        joint_angles = {
             # Right arm
             self.reachy.r_arm.r_shoulder_pitch: 0,
             self.reachy.r_arm.r_shoulder_roll: 0,
@@ -230,8 +230,4 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: 0
         }
 
-        goto(
-            goal_positions=joint_angle_positions,
-            duration=1.0,
-            interpolation_mode=InterpolationMode.MINIMUM_JERK
-        )
+        self.reachy_goto(joint_angles, 1.0)
