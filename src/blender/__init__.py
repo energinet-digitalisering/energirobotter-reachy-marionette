@@ -7,6 +7,7 @@ import bpy
 from bpy.utils import register_class, unregister_class
 
 from .reachy_marionette import ReachyMarionette
+from .actions_gpt import ActionsGPT
 
 # Addon metadata
 bl_info = {
@@ -59,6 +60,7 @@ except:
 
 # Global object
 reachy = ReachyMarionette()
+gpt = ActionsGPT()
 
 
 # Classes
@@ -190,6 +192,32 @@ class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
+class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
+
+    bl_idname = "reachy_marionette.activate_gpt"
+    bl_label = "Start ChatGPT client"
+
+    def execute(self, context):
+
+        if not gpt.activate(self.report):
+            return {'CANCELLED'}
+
+        return {'FINISHED'}
+
+
+class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
+    # Select action
+
+    bl_idname = "reachy_marionette.action_selection"
+    bl_label = "Select action"
+
+    def execute(self, context):
+
+        gpt.send_request("Hello Reachy", self.report)
+
+        return {'FINISHED'}
+
+
 class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
     # Addon panel displaying options
 
@@ -222,6 +250,12 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         layout.row().operator(REACHYMARIONETTE_OT_AnimatePose.bl_idname,
                               text="Animate Pose", icon='ARMATURE_DATA')
 
+        layout.row().operator(REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+                              text="Activate GPT", icon='ARMATURE_DATA')
+
+        layout.row().operator(REACHYMARIONETTE_OT_SendRequest.bl_idname,
+                              text="Send Request", icon='ARMATURE_DATA')
+
 
 classes = (
     SceneProperties,
@@ -230,6 +264,8 @@ classes = (
     REACHYMARIONETTE_OT_SendPose,
     REACHYMARIONETTE_OT_StreamPose,
     REACHYMARIONETTE_OT_AnimatePose,
+    REACHYMARIONETTE_OT_ActivateGPT,
+    REACHYMARIONETTE_OT_SendRequest,
     REACHYMARIONETTE_PT_Panel
 )
 
