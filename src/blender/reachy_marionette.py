@@ -136,7 +136,7 @@ class ReachyMarionette():
             self.reachy.r_arm.r_shoulder_roll: self.angle_of_bone("shoulder_roll.R"),
             self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R") * (-1),
             self.reachy.r_arm.r_elbow_pitch: self.angle_of_bone("elbow_pitch.R"),
-            self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R"),
+            self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R") * (-1),
             self.reachy.r_arm.r_wrist_pitch: self.angle_of_bone("wrist_pitch.R"),
             self.reachy.r_arm.r_wrist_roll: self.angle_of_bone("wrist_roll.R"),
             self.reachy.r_arm.r_gripper: self.angle_of_bone("gripper.R"),
