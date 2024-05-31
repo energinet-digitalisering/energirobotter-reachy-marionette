@@ -1,4 +1,5 @@
 import os
+from requests.exceptions import RequestException
 
 import bpy
 import openai
@@ -38,6 +39,34 @@ class ActionsGPT():
 
         return True
 
+    def get_gpt_response(self, messages, report_function):
+
+        try:
+            # Request response from ChatGPT
+            response = self.client.chat.completions.create(
+                model=self.gpt_model,
+                messages=messages,
+                max_tokens=self.max_tokens,
+            )
+
+            if hasattr(response, "choices") and len(response.choices) > 0:
+                return response.choices[0].message.content
+            else:
+                report_function({"ERROR"}, "No completion choices returned.")
+                return "Sorry, I couldn't generate a response."
+
+        except openai.OpenAIError as error:
+            report_function({"ERROR"}, "OpenAI API error: " + str(error))
+            return "Sorry, there was an error with the AI service."
+
+        except RequestException as e:
+            report_function({"ERROR"}, "Request error: " + str(error))
+            return "Sorry, there was a network issue."
+
+        except Exception as error:
+            report_function({"ERROR"}, "Could not send response: " + str(error))
+            return "Sorry, something went wrong."
+
     def send_request(self, promt, reachy_object, report_function):
 
         if reachy_object.reachy == None:
@@ -63,15 +92,8 @@ class ActionsGPT():
         messages.append(message_user)
         self.chat_history.append(message_user)
 
-        try:
-            # Request response from ChatGPT
-            response = self.client.chat.completions.create(
-                model=self.gpt_model,
-                messages=messages,
-                max_tokens=self.max_tokens,
-            )
-
-        except Exception as error:
+        # Get response from ChatGPT, and send action / animation to Reachy
+        response = self.get_gpt_response(messages, report_function)
             report_function(
                 {'ERROR'}, "Could not send response: " + str(error))
             return

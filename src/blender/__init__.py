@@ -47,14 +47,17 @@ def install_packages(packages):
 try:
     import openai
     import reachy_sdk
+    import requests
 
 except:
     print("openai and/or reachy_sdk module not found, installing with pip...")
 
-    install_packages(['openai', 'reachy-sdk'])
+    install_packages(["openai", "reachy-sdk", "requests"])
 
     import openai
     import reachy_sdk
+    import requests
+
     print("Done installing packages")
 
 
