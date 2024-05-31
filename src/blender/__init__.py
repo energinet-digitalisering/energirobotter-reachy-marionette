@@ -110,7 +110,7 @@ class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
 
 
 class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
-    # Get angles form Blender rig, and send to Reachy
+    # Get angles from Blender rig, and send to Reachy
 
     bl_idname = "object.send_pose"
     bl_label = "Send current pose once"
@@ -122,8 +122,8 @@ class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class REACHYMARIONETTE_OT_StreamAngles(bpy.types.Operator):
-    # Continously get angles form Blender rig, and stream to Reachy
+class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
+    # Continously get angles from Blender rig, and stream to Reachy
 
     bl_idname = "object.stream_angles"
     bl_label = "Live streaming of bone angles"
@@ -136,7 +136,7 @@ class REACHYMARIONETTE_OT_StreamAngles(bpy.types.Operator):
 
     def modal(self, context, event):
         if event.type == 'ESC':
-            reachy.stream_angles_disable()
+            reachy.set_state_idle()
 
             self.report({'INFO'}, "ESC key pressed, stopping stream")
             return {'FINISHED'}
@@ -147,6 +147,35 @@ class REACHYMARIONETTE_OT_StreamAngles(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
 
         reachy.stream_angles_enable(self.report)
+
+        return {'RUNNING_MODAL'}
+
+
+class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
+    # Go through animation timeline and get angles from Blender rig, and send to Reachy
+
+    bl_idname = "object.animate_pose"
+    bl_label = "Go through animation timeline and send poses"
+
+    def __init__(self):
+        print("Animation starting...")
+
+    def __del__(self):
+        print("Animation ended")
+
+    def modal(self, context, event):
+        if event.type == 'ESC':
+            reachy.set_state_idle()
+
+            self.report({'INFO'}, "ESC key pressed, stopping animation")
+            return {'FINISHED'}
+
+        return {'PASS_THROUGH'}
+
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+
+        reachy.animate_angles(self.report)
 
         return {'RUNNING_MODAL'}
 
@@ -177,8 +206,11 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         layout.row().operator(REACHYMARIONETTE_OT_SendPose.bl_idname,
                               text="Send Pose", icon='ARMATURE_DATA')
 
-        layout.row().operator(REACHYMARIONETTE_OT_StreamAngles.bl_idname,
+        layout.row().operator(REACHYMARIONETTE_OT_StreamPose.bl_idname,
                               text="Stream Pose", icon='ARMATURE_DATA')
+
+        layout.row().operator(REACHYMARIONETTE_OT_AnimatePose.bl_idname,
+                              text="Animate Pose", icon='ARMATURE_DATA')
 
 
 classes = (
@@ -186,7 +218,8 @@ classes = (
     REACHYMARIONETTE_OT_ConnectReachy,
     REACHYMARIONETTE_OT_DisconnectReachy,
     REACHYMARIONETTE_OT_SendPose,
-    REACHYMARIONETTE_OT_StreamAngles,
+    REACHYMARIONETTE_OT_StreamPose,
+    REACHYMARIONETTE_OT_AnimatePose,
     REACHYMARIONETTE_PT_Panel
 )
 

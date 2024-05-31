@@ -1,3 +1,4 @@
+from enum import Enum
 import mathutils
 import numpy as np
 import functools
@@ -10,23 +11,33 @@ from reachy_sdk.trajectory import goto
 from reachy_sdk.trajectory.interpolation import InterpolationMode
 
 
+class State(Enum):
+    IDLE = 1
+    STREAMING = 2
+    ANIMATING = 3
+
+
 class ReachyMarionette():
 
     def __init__(self):
 
         self.reachy = None
-        self.is_streaming = False
+        self.state = State.IDLE
         self.threads = []
 
         self.stream_interval = 2.0
 
     def __del__(self):
-        self.stream_angles_disable()
+        self.set_state_idle()
 
         for thread in self.threads:
             thread.join()
 
+    def set_state_idle(self):
+        self.state == State.IDLE
+
     # Helper functions from rigify plugin
+
     def get_pose_matrix_in_other_space(self, mat, pose_bone):
         """ Returns the transform matrix relative to pose_bone's current
         transform space. In other words, presuming that mat is in
@@ -101,7 +112,15 @@ class ReachyMarionette():
         else:
             report_function({'INFO'}, "No Reachy is connected")
 
-    def send_angles(self, report_function):
+    def reachy_goto(self, joint_angles, duration=1.0):
+
+        goto(
+            goal_positions=joint_angles,
+            duration=duration,
+            interpolation_mode=InterpolationMode.MINIMUM_JERK
+        )
+
+    def send_angles(self, report_function, duration=1.0, threaded=False):
 
         if self.reachy == None:
             report_function({'ERROR'}, "Reachy not connected!")
@@ -113,9 +132,9 @@ class ReachyMarionette():
 
         joint_angle_positions = {
             # Right arm
-            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R"),
+            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R") * (-1),
             self.reachy.r_arm.r_shoulder_roll: self.angle_of_bone("shoulder_roll.R"),
-            self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R"),
+            self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R") * (-1),
             self.reachy.r_arm.r_elbow_pitch: self.angle_of_bone("elbow_pitch.R"),
             self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R"),
             self.reachy.r_arm.r_wrist_pitch: self.angle_of_bone("wrist_pitch.R"),
@@ -124,7 +143,7 @@ class ReachyMarionette():
             # Left arm
             self.reachy.l_arm.l_shoulder_pitch: self.angle_of_bone("shoulder_pitch.L"),
             self.reachy.l_arm.l_shoulder_roll: self.angle_of_bone("shoulder_roll.L"),
-            self.reachy.l_arm.l_arm_yaw: self.angle_of_bone("shoulder_yaw.L"),
+            self.reachy.l_arm.l_arm_yaw: self.angle_of_bone("shoulder_yaw.L") * (-1),
             self.reachy.l_arm.l_elbow_pitch: self.angle_of_bone("elbow_pitch.L"),
             self.reachy.l_arm.l_forearm_yaw: self.angle_of_bone("forearm_yaw.L"),
             self.reachy.l_arm.l_wrist_pitch: self.angle_of_bone("wrist_pitch.L"),
@@ -132,44 +151,65 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: self.angle_of_bone("gripper.L"),
         }
 
-        # Duration is faster than the interval, to finish before the next thread
-        thread = threading.Thread(
-            target=self.reachy_goto, args=[joint_angle_positions, self.stream_interval * 0.5])
-        self.threads.append(thread)
-        thread.start()
+        if threaded:
+            thread = threading.Thread(
+                target=self.reachy_goto, args=[joint_angle_positions, duration])
+            self.threads.append(thread)
+            thread.start()
 
-    def reachy_goto(self, joint_angles, duration=1.0):
-
-        goto(
-            goal_positions=joint_angles,
-            duration=duration,
-            interpolation_mode=InterpolationMode.MINIMUM_JERK
-        )
+        else:
+            self.reachy_goto(joint_angle_positions, duration)
 
     def stream_angles(self, report_function):
-        if self.is_streaming:
-            self.send_angles(report_function)
+        if self.state == State.STREAMING:
+            # Duration is faster than the interval, to finish before the next thread
+            self.send_angles(
+                report_function, duration=self.stream_interval * 0.5, threaded=True)
             return self.stream_interval  # Seconds till next function call
         else:
             return None
 
     def stream_angles_enable(self, report_function):
 
-        if not self.is_streaming:
-            self.is_streaming = True
+        if not self.state == State.STREAMING:
+            self.state = State.STREAMING
 
             # Create Blender timer
             bpy.app.timers.register(functools.partial(
                 self.stream_angles, report_function))
 
         else:
-            report_function({'INFO'}, "Streaming is already on progress")
+            report_function({'INFO'}, "Streaming is already in progress,")
 
-    def stream_angles_disable(self):
-        self.is_streaming = False
+    def animate_angles(self, report_function):
+
+        if not self.state == State.ANIMATING:
+            self.state = State.ANIMATING
+
+            frame_prev = 0
+            bpy.data.scenes['Scene'].show_keys_from_selected_only = False
+            bpy.data.scenes['Scene'].frame_set(frame_prev)
+
+            # Get to initial pose
+            self.send_angles(report_function, duration=1.0, threaded=False)
+
+            # Iterate through all keyframes
+            while (bpy.ops.screen.keyframe_jump(next=True) == {'FINISHED'} and self.state == State.ANIMATING):
+
+                frame_diff = bpy.data.scenes['Scene'].frame_current - frame_prev
+                duration = frame_diff / bpy.context.scene.render.fps
+                frame_prev = bpy.data.scenes['Scene'].frame_current
+
+                # Wait for movement to complete before moving on to next keyframe
+                self.send_angles(report_function, duration, threaded=False)
+
+            self.state = State.IDLE
+
+        else:
+            report_function({'INFO'}, "Animation is already in progress,")
 
     def reachy_reset_pose(self):
-        joint_angle_positions = {
+        joint_angles = {
             # Right arm
             self.reachy.r_arm.r_shoulder_pitch: 0,
             self.reachy.r_arm.r_shoulder_roll: 0,
@@ -190,8 +230,4 @@ class ReachyMarionette():
             self.reachy.l_arm.l_gripper: 0
         }
 
-        goto(
-            goal_positions=joint_angle_positions,
-            duration=1.0,
-            interpolation_mode=InterpolationMode.MINIMUM_JERK
-        )
+        self.reachy_goto(joint_angles, 1.0)
