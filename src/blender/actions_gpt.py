@@ -17,6 +17,13 @@ class ActionsGPT():
         self.max_tokens = 1000
         self.chat_history_len = 2
 
+        self.action_catalouge = [
+            "ReachyWave",
+            "ReachyDance",
+            "ReachyYes",
+            "ReachyNo",
+            "ReachyShrug",
+        ]
 
         self.system_prompt = """"
             You are a humanoid robot named Reachy. You can emote using the actions ReachyWave, ReachyDance, ReachyYes, ReachyNo, and ReachyShrug.
@@ -92,6 +99,10 @@ class ActionsGPT():
 
         # Get response from ChatGPT, and send action / animation to Reachy
         response = self.get_gpt_response(messages, report_function)
+
+        if response not in self.action_catalouge:
+            report_function({"ERROR"}, "Response was not an action: " + response)
+            response = "ReachyShrug"
 
         report_function({"INFO"}, "Chosen action: " + response)
 
