@@ -10,8 +10,10 @@ class ActionsGPT():
 
         self.client = None
         self.api_key = None
-
         self.chat_history = []
+
+        self.gpt_model = "gpt-4o"
+        self.max_tokens = 1000
 
         self.system_prompt = """"
             You are a humanoid robot named Reachy. You can emote using the actions ReachyWave, ReachyDance, ReachyYes, ReachyNo, and ReachyShrug.
@@ -54,27 +56,30 @@ class ActionsGPT():
 
         # Add system promt and recent chat history
         messages = [{"role": "system", "content": self.system_prompt}]
-        messages.append(self.chat_history[-10:])
+        # messages.extend(self.chat_history[-10:]) # Uncommented for now, history does not provide extra context
 
         # Add user promt
         message_user = {"role": "user", "content": promt}
         messages.append(message_user)
         self.chat_history.append(message_user)
 
-        # Request response from ChatGPT
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            max_tokens=1500,
-        )
+        try:
+            # Request response from ChatGPT
+            response = self.client.chat.completions.create(
+                model=self.gpt_model,
+                messages=messages,
+                max_tokens=self.max_tokens,
+            )
 
-        # print(response.choices[0].message)
+        except Exception as error:
+            report_function(
+                {'ERROR'}, "Could not send response: " + str(error))
+            return
 
-    def print_actions(self, reachy_object, report_function):
-        for action in bpy.data.actions:
-            print(action.name)
+        # Get action from response, and send animation to Reachy
+        action = response.choices[0].message.content
 
-        bpy.context.object.animation_data.action = bpy.data.actions.get(
-            "ReachyShrug")
+        report_function({'INFO'}, "Chosen action: " + action)
 
+        bpy.context.object.animation_data.action = bpy.data.actions.get(action)
         reachy_object.animate_angles(report_function)
