@@ -17,7 +17,7 @@ class State(Enum):
     ANIMATING = 3
 
 
-class ReachyMarionette():
+class ReachyMarionette:
 
     def __init__(self):
 
@@ -39,7 +39,7 @@ class ReachyMarionette():
     # Helper functions from rigify plugin
 
     def get_pose_matrix_in_other_space(self, mat, pose_bone):
-        """ Returns the transform matrix relative to pose_bone's current
+        """Returns the transform matrix relative to pose_bone's current
         transform space. In other words, presuming that mat is in
         armature space, slapping the returned matrix onto pose_bone
         should give it the armature-space transforms of mat.
@@ -81,22 +81,20 @@ class ReachyMarionette():
 
         return np.rad2deg(self.get_bones_rotation(bone, axis_rot))
 
-    def connect_reachy(self, report_function, ip='localhost'):
+    def connect_reachy(self, report_function, ip="localhost"):
 
         if self.reachy != None:
-            report_function(
-                {'INFO'}, "Connection already established at '%s'" % ip)
+            report_function({"INFO"}, "Connection already established at '%s'" % ip)
             return
 
         # Try connection
         try:
             self.reachy = ReachySDK(host=ip)
-            self.reachy.turn_on('reachy')
-            report_function({'INFO'}, "Connection established succesfully!")
+            self.reachy.turn_on("reachy")
+            report_function({"INFO"}, "Connection established succesfully!")
 
         except:
-            report_function(
-                {'ERROR'}, ("Could not find connection at '%s'" % ip))
+            report_function({"ERROR"}, ("Could not find connection at '%s'" % ip))
 
     def disconnect_reachy(self, report_function):
 
@@ -105,38 +103,39 @@ class ReachyMarionette():
             self.reachy_reset_pose()
             # self.reachy.turn_off_smoothly('reachy')
             # flush_communication()
-            report_function({'WARNING'}, "Proper disconnection disabled!")
+            report_function({"WARNING"}, "Proper disconnection disabled!")
             self.reachy = None
-            report_function({'INFO'}, "Disconnected Reachy")
+            report_function({"INFO"}, "Disconnected Reachy")
 
         else:
-            report_function({'INFO'}, "No Reachy is connected")
+            report_function({"INFO"}, "No Reachy is connected")
 
     def reachy_goto(self, joint_angles, duration=1.0):
 
         goto(
             goal_positions=joint_angles,
             duration=duration,
-            interpolation_mode=InterpolationMode.MINIMUM_JERK
+            interpolation_mode=InterpolationMode.MINIMUM_JERK,
         )
 
     def send_angles(self, report_function, duration=1.0, threaded=False):
 
         if self.reachy == None:
-            report_function({'ERROR'}, "Reachy not connected!")
+            report_function({"ERROR"}, "Reachy not connected!")
             return
 
-        if bpy.context.object.type != 'ARMATURE':
-            report_function({'ERROR'}, "Please select Armature")
+        if bpy.context.object.type != "ARMATURE":
+            report_function({"ERROR"}, "Please select Armature")
             return
 
         joint_angle_positions = {
             # Right arm
-            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R") * (-1),
+            self.reachy.r_arm.r_shoulder_pitch: self.angle_of_bone("shoulder_pitch.R")
+            * (-1),
             self.reachy.r_arm.r_shoulder_roll: self.angle_of_bone("shoulder_roll.R"),
             self.reachy.r_arm.r_arm_yaw: self.angle_of_bone("shoulder_yaw.R") * (-1),
             self.reachy.r_arm.r_elbow_pitch: self.angle_of_bone("elbow_pitch.R"),
-            self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R"),
+            self.reachy.r_arm.r_forearm_yaw: self.angle_of_bone("forearm_yaw.R") * (-1),
             self.reachy.r_arm.r_wrist_pitch: self.angle_of_bone("wrist_pitch.R"),
             self.reachy.r_arm.r_wrist_roll: self.angle_of_bone("wrist_roll.R"),
             self.reachy.r_arm.r_gripper: self.angle_of_bone("gripper.R"),
@@ -153,7 +152,8 @@ class ReachyMarionette():
 
         if threaded:
             thread = threading.Thread(
-                target=self.reachy_goto, args=[joint_angle_positions, duration])
+                target=self.reachy_goto, args=[joint_angle_positions, duration]
+            )
             self.threads.append(thread)
             thread.start()
 
@@ -164,7 +164,8 @@ class ReachyMarionette():
         if self.state == State.STREAMING:
             # Duration is faster than the interval, to finish before the next thread
             self.send_angles(
-                report_function, duration=self.stream_interval * 0.5, threaded=True)
+                report_function, duration=self.stream_interval * 0.5, threaded=True
+            )
             return self.stream_interval  # Seconds till next function call
         else:
             return None
@@ -175,11 +176,12 @@ class ReachyMarionette():
             self.state = State.STREAMING
 
             # Create Blender timer
-            bpy.app.timers.register(functools.partial(
-                self.stream_angles, report_function))
+            bpy.app.timers.register(
+                functools.partial(self.stream_angles, report_function)
+            )
 
         else:
-            report_function({'INFO'}, "Streaming is already in progress,")
+            report_function({"INFO"}, "Streaming is already in progress,")
 
     def animate_angles(self, report_function):
 
@@ -187,18 +189,21 @@ class ReachyMarionette():
             self.state = State.ANIMATING
 
             frame_prev = 0
-            bpy.data.scenes['Scene'].show_keys_from_selected_only = False
-            bpy.data.scenes['Scene'].frame_set(frame_prev)
+            bpy.data.scenes["Scene"].show_keys_from_selected_only = False
+            bpy.data.scenes["Scene"].frame_set(frame_prev)
 
             # Get to initial pose
             self.send_angles(report_function, duration=1.0, threaded=False)
 
             # Iterate through all keyframes
-            while (bpy.ops.screen.keyframe_jump(next=True) == {'FINISHED'} and self.state == State.ANIMATING):
+            while (
+                bpy.ops.screen.keyframe_jump(next=True) == {"FINISHED"}
+                and self.state == State.ANIMATING
+            ):
 
-                frame_diff = bpy.data.scenes['Scene'].frame_current - frame_prev
+                frame_diff = bpy.data.scenes["Scene"].frame_current - frame_prev
                 duration = frame_diff / bpy.context.scene.render.fps
-                frame_prev = bpy.data.scenes['Scene'].frame_current
+                frame_prev = bpy.data.scenes["Scene"].frame_current
 
                 # Wait for movement to complete before moving on to next keyframe
                 self.send_angles(report_function, duration, threaded=False)
@@ -206,7 +211,7 @@ class ReachyMarionette():
             self.state = State.IDLE
 
         else:
-            report_function({'INFO'}, "Animation is already in progress,")
+            report_function({"INFO"}, "Animation is already in progress,")
 
     def reachy_reset_pose(self):
         joint_angles = {
@@ -227,7 +232,7 @@ class ReachyMarionette():
             self.reachy.l_arm.l_forearm_yaw: 0,
             self.reachy.l_arm.l_wrist_pitch: 0,
             self.reachy.l_arm.l_wrist_roll: 0,
-            self.reachy.l_arm.l_gripper: 0
+            self.reachy.l_arm.l_gripper: 0,
         }
 
         self.reachy_goto(joint_angles, 1.0)

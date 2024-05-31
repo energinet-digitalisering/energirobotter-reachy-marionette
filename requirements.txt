@@ -1,2 +1,4 @@
 fake-bpy-module
+openai
 reachy-sdk
+requests
