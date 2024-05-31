@@ -15,6 +15,8 @@ class ActionsGPT():
 
         self.gpt_model = "gpt-4o"
         self.max_tokens = 1000
+        self.chat_history_len = 2
+
 
         self.system_prompt = """"
             You are a humanoid robot named Reachy. You can emote using the actions ReachyWave, ReachyDance, ReachyYes, ReachyNo, and ReachyShrug.
@@ -85,7 +87,7 @@ class ActionsGPT():
 
         # Add system promt and recent chat history
         messages = [{"role": "system", "content": self.system_prompt}]
-        # messages.extend(self.chat_history[-10:]) # Uncommented for now, history does not provide extra context
+        messages.extend(self.chat_history[-self.chat_history_len :])
 
         # Add user promt
         message_user = {"role": "user", "content": promt}
