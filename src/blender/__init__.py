@@ -95,6 +95,11 @@ class SceneProperties(bpy.types.PropertyGroup):
         default='FK',
         update=callback_kinematics)  # type: ignore (stops warning squiggles)
 
+    Promt: bpy.props.StringProperty(
+        name="Promt",
+        description="Promt for ChatGPT",
+        default="")  # type: ignore (stops warning squiggles)
+
 
 class REACHYMARIONETTE_OT_ConnectReachy(bpy.types.Operator):
     # Handling connection to Reachy
@@ -212,8 +217,9 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
     bl_label = "Select action"
 
     def execute(self, context):
+        scene_properties = context.scene.scn_prop
 
-        gpt.send_request("Hello Reachy", self.report)
+        gpt.send_request(scene_properties.Promt, reachy, self.report)
 
         return {'FINISHED'}
 
@@ -252,6 +258,8 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
 
         layout.row().operator(REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
                               text="Activate GPT", icon='ARMATURE_DATA')
+
+        layout.prop(scene_properties, "Promt")
 
         layout.row().operator(REACHYMARIONETTE_OT_SendRequest.bl_idname,
                               text="Send Request", icon='ARMATURE_DATA')
