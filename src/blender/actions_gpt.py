@@ -44,7 +44,16 @@ class ActionsGPT():
 
         return True
 
-    def send_request(self, promt, report_function):
+    def send_request(self, promt, reachy_object, report_function):
+
+        if reachy_object.reachy == None:
+            report_function({'ERROR'}, "Reachy not connected!")
+            return
+
+        if len(promt) == 0:
+            report_function(
+                {'ERROR'}, "Please provide a promt.")
+            return
 
         if not self.client:
             report_function(
