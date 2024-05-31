@@ -12,12 +12,12 @@ from .actions_gpt import ActionsGPT
 # Addon metadata
 bl_info = {
     "name": "ReachyMarionette",
-            "author": "Energinet",
-            "version": (1, 0, 0),
-            "blender": (4, 0, 1),
-            "location": "Toolbar > ReachyMarionette",
-            "description": "Connects to the Reachy robot from Pollen Robotics, to stream angles of joints in Reachy rig.",
-            "category": "Animation"
+    "author": "Energinet",
+    "version": (1, 0, 0),
+    "blender": (4, 0, 1),
+    "location": "Toolbar > ReachyMarionette",
+    "description": "Connects to the Reachy robot from Pollen Robotics, to stream angles of joints in Reachy rig.",
+    "category": "Animation",
 }
 
 # Install missing packages to Blenders Python install
@@ -25,23 +25,22 @@ bl_info = {
 
 def install_packages(packages):
 
-    if platform.system() == 'win32':
+    if platform.system() == "win32":
 
-        python_exe = os.path.join(sys.prefix, 'bin', 'python.exe')
-        target = os.path.join(sys.prefix, 'lib', 'site-packages')
+        python_exe = os.path.join(sys.prefix, "bin", "python.exe")
+        target = os.path.join(sys.prefix, "lib", "site-packages")
 
-        subprocess.call([python_exe, '-m', 'ensurepip'])
-        subprocess.call(
-            [python_exe, '-m', 'pip', 'install', '--upgrade', 'pip'])
+        subprocess.call([python_exe, "-m", "ensurepip"])
+        subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
         for package in packages:
-            subprocess.call([python_exe, '-m', 'pip', 'install',
-                            '--upgrade', package, '-t', target])
+            subprocess.call(
+                [python_exe, "-m", "pip", "install", "--upgrade", package, "-t", target]
+            )
 
     else:
         for package in packages:
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", package])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
 try:
@@ -68,6 +67,7 @@ gpt = ActionsGPT()
 
 # Classes
 
+
 class SceneProperties(bpy.types.PropertyGroup):
     # Defining custom properties to be used by the addon panel
 
@@ -77,31 +77,31 @@ class SceneProperties(bpy.types.PropertyGroup):
 
         for bone in bpy.context.active_object.pose.bones:
 
-            if not 'IK' in bone.constraints:
+            if not "IK" in bone.constraints:
                 continue
 
-            if scene_properties.Kinematics == 'FK':
-                bone.constraints['IK'].enabled = False
-            elif scene_properties.Kinematics == 'IK':
-                bone.constraints['IK'].enabled = True
+            if scene_properties.Kinematics == "FK":
+                bone.constraints["IK"].enabled = False
+            elif scene_properties.Kinematics == "IK":
+                bone.constraints["IK"].enabled = True
 
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
         description="Reachy's IP adress (default = localhost)",
-        default="localhost")  # type: ignore (stops warning squiggles)
+        default="localhost",
+    )  # type: ignore (stops warning squiggles)
 
     Kinematics: bpy.props.EnumProperty(
         name="Kinematics",
         description="Choose if rig is controlled by forward kinematics (FK) or inverse kinematics (IK).",
-        items=[('FK', 'FK', ''),
-               ('IK', 'IK', '')],
-        default='FK',
-        update=callback_kinematics)  # type: ignore (stops warning squiggles)
+        items=[("FK", "FK", ""), ("IK", "IK", "")],
+        default="FK",
+        update=callback_kinematics,
+    )  # type: ignore (stops warning squiggles)
 
     Promt: bpy.props.StringProperty(
-        name="Promt",
-        description="Promt for ChatGPT",
-        default="")  # type: ignore (stops warning squiggles)
+        name="Promt", description="Promt for ChatGPT", default=""
+    )  # type: ignore (stops warning squiggles)
 
 
 class REACHYMARIONETTE_OT_ConnectReachy(bpy.types.Operator):
@@ -114,7 +114,7 @@ class REACHYMARIONETTE_OT_ConnectReachy(bpy.types.Operator):
 
         reachy.connect_reachy(self.report, scene_properties.IPaddress)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
@@ -126,7 +126,7 @@ class REACHYMARIONETTE_OT_DisconnectReachy(bpy.types.Operator):
 
         reachy.disconnect_reachy(self.report)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
@@ -139,7 +139,7 @@ class REACHYMARIONETTE_OT_SendPose(bpy.types.Operator):
 
         reachy.send_angles(self.report)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
@@ -155,20 +155,20 @@ class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
         print("Stream ended")
 
     def modal(self, context, event):
-        if event.type == 'ESC':
+        if event.type == "ESC":
             reachy.set_state_idle()
 
-            self.report({'INFO'}, "ESC key pressed, stopping stream")
-            return {'FINISHED'}
+            self.report({"INFO"}, "ESC key pressed, stopping stream")
+            return {"FINISHED"}
 
-        return {'PASS_THROUGH'}
+        return {"PASS_THROUGH"}
 
     def invoke(self, context, event):
         context.window_manager.modal_handler_add(self)
 
         reachy.stream_angles_enable(self.report)
 
-        return {'RUNNING_MODAL'}
+        return {"RUNNING_MODAL"}
 
 
 class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
@@ -184,20 +184,20 @@ class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
         print("Animation ended")
 
     def modal(self, context, event):
-        if event.type == 'ESC':
+        if event.type == "ESC":
             reachy.set_state_idle()
 
-            self.report({'INFO'}, "ESC key pressed, stopping animation")
-            return {'FINISHED'}
+            self.report({"INFO"}, "ESC key pressed, stopping animation")
+            return {"FINISHED"}
 
-        return {'PASS_THROUGH'}
+        return {"PASS_THROUGH"}
 
     def invoke(self, context, event):
         context.window_manager.modal_handler_add(self)
 
         reachy.animate_angles(self.report)
 
-        return {'RUNNING_MODAL'}
+        return {"RUNNING_MODAL"}
 
 
 class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
@@ -208,9 +208,9 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
     def execute(self, context):
 
         if not gpt.activate(self.report):
-            return {'CANCELLED'}
+            return {"CANCELLED"}
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
@@ -224,7 +224,7 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
 
         gpt.send_request(scene_properties.Promt, reachy, self.report)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
@@ -234,7 +234,7 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "ReachyMarionette"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         layout = self.layout
@@ -242,30 +242,51 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
 
         layout.prop(scene_properties, "IPaddress")
 
-        layout.row().operator(REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
-                              text="Connect to Reachy", icon='PLUGIN')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
+            text="Connect to Reachy",
+            icon="PLUGIN",
+        )
 
-        layout.row().operator(REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
-                              text="Disconnect Reachy", icon='UNLINKED')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
+            text="Disconnect Reachy",
+            icon="UNLINKED",
+        )
 
         layout.prop(scene_properties, "Kinematics")
 
-        layout.row().operator(REACHYMARIONETTE_OT_SendPose.bl_idname,
-                              text="Send Pose", icon='ARMATURE_DATA')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_SendPose.bl_idname,
+            text="Send Pose",
+            icon="ARMATURE_DATA",
+        )
 
-        layout.row().operator(REACHYMARIONETTE_OT_StreamPose.bl_idname,
-                              text="Stream Pose", icon='ARMATURE_DATA')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_StreamPose.bl_idname,
+            text="Stream Pose",
+            icon="ARMATURE_DATA",
+        )
 
-        layout.row().operator(REACHYMARIONETTE_OT_AnimatePose.bl_idname,
-                              text="Animate Pose", icon='ARMATURE_DATA')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_AnimatePose.bl_idname,
+            text="Animate Pose",
+            icon="ARMATURE_DATA",
+        )
 
-        layout.row().operator(REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
-                              text="Activate GPT", icon='ARMATURE_DATA')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+            text="Activate GPT",
+            icon="ARMATURE_DATA",
+        )
 
         layout.prop(scene_properties, "Promt")
 
-        layout.row().operator(REACHYMARIONETTE_OT_SendRequest.bl_idname,
-                              text="Send Request", icon='ARMATURE_DATA')
+        layout.row().operator(
+            REACHYMARIONETTE_OT_SendRequest.bl_idname,
+            text="Send Request",
+            icon="ARMATURE_DATA",
+        )
 
 
 classes = (
@@ -277,7 +298,7 @@ classes = (
     REACHYMARIONETTE_OT_AnimatePose,
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
-    REACHYMARIONETTE_PT_Panel
+    REACHYMARIONETTE_PT_Panel,
 )
 
 
@@ -289,13 +310,12 @@ def register():
 
 
 def unregister():
-    for cls in (classes):
+    for cls in classes:
         unregister_class(cls)
 
     del bpy.types.Scene.scn_prop
 
-    def temp(_x, _y):
-        ...
+    def temp(_x, _y): ...
 
     reachy.disconnect_reachy(temp)
 

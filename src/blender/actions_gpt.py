@@ -5,7 +5,7 @@ import bpy
 import openai
 
 
-class ActionsGPT():
+class ActionsGPT:
 
     def __init__(self):
 
@@ -41,7 +41,9 @@ class ActionsGPT():
 
         if not os.getenv("OPENAI_API_KEY"):
             report_function(
-                {'ERROR'}, "No API key detected. Please write API key to OPENAI_API_KEY environment variable. System restart may be required after writing to environment variable.")
+                {"ERROR"},
+                "No API key detected. Please write API key to OPENAI_API_KEY environment variable. System restart may be required after writing to environment variable.",
+            )
             return False
 
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -79,13 +81,13 @@ class ActionsGPT():
     def send_request(self, promt, reachy_object, report_function):
 
         if len(promt) == 0:
-            report_function(
-                {'ERROR'}, "Please provide a promt.")
+            report_function({"ERROR"}, "Please provide a promt.")
             return
 
         if not self.client:
             report_function(
-                {'ERROR'}, "No OpenAI client detected. Please activate client.")
+                {"ERROR"}, "No OpenAI client detected. Please activate client."
+            )
             return
 
         # Add system promt and recent chat history
