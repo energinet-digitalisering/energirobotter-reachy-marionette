@@ -71,10 +71,6 @@ class ActionsGPT():
 
     def send_request(self, promt, reachy_object, report_function):
 
-        if reachy_object.reachy == None:
-            report_function({'ERROR'}, "Reachy not connected!")
-            return
-
         if len(promt) == 0:
             report_function(
                 {'ERROR'}, "Please provide a promt.")
@@ -96,14 +92,21 @@ class ActionsGPT():
 
         # Get response from ChatGPT, and send action / animation to Reachy
         response = self.get_gpt_response(messages, report_function)
+
+        report_function({"INFO"}, "Chosen action: " + response)
+
+        bpy.context.object.animation_data.action = bpy.data.actions.get(response)
+
+        if reachy_object.reachy != None:
+            # Send action to Reachy robot
+            reachy_object.animate_angles(report_function)
+
+        else:
             report_function(
-                {'ERROR'}, "Could not send response: " + str(error))
-            return
+                {"INFO"}, "Reachy not connected, playing animation instead."
+            )
 
-        # Get action from response, and send animation to Reachy
-        action = response.choices[0].message.content
-
-        report_function({'INFO'}, "Chosen action: " + action)
-
-        bpy.context.object.animation_data.action = bpy.data.actions.get(action)
-        reachy_object.animate_angles(report_function)
+            # Play animation
+            bpy.ops.screen.animation_cancel()
+            bpy.ops.screen.frame_jump()
+            bpy.ops.screen.animation_play()
