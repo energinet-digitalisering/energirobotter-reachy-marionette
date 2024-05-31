@@ -29,18 +29,10 @@ class ActionsGPT():
 
         if not os.getenv("OPENAI_API_KEY"):
             report_function(
-                {'ERROR'}, "OPENAI_API_KEY environment variable must be set.")
-            return
-
-        print(os.getenv("OPENAI_API_KEY"))
-
-        try:
-            self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        except:
-            report_function(
-                {'ERROR'}, "No API key detected. Please write API key to OPENAI_API_KEY environment variable.")
+                {'ERROR'}, "No API key detected. Please write API key to OPENAI_API_KEY environment variable. System restart may be required after writing to environment variable.")
             return False
+
+        self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
         return True
 
