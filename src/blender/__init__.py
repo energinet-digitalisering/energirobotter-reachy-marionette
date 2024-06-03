@@ -20,10 +20,18 @@ bl_info = {
     "category": "Animation",
 }
 
-# Install missing packages to Blenders Python install
+
+# Packages dictionary, key = python import name, value = pip install name
+packages = {
+    "openai": "openai",
+    "reachy_sdk": "reachy-sdk",
+    "requests": "requests",
+    "sounddevice": "sounddevice",
+    "whisper": "openai-whisper",
+}
 
 
-def install_packages(packages):
+def install_package(package):
 
     if platform.system() == "win32":
 
@@ -33,31 +41,31 @@ def install_packages(packages):
         subprocess.call([python_exe, "-m", "ensurepip"])
         subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
-        for package in packages:
-            subprocess.call(
-                [python_exe, "-m", "pip", "install", "--upgrade", package, "-t", target]
-            )
+        subprocess.call(
+            [python_exe, "-m", "pip", "install", "--upgrade", package, "-t", target]
+        )
 
     else:
-        for package in packages:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
-try:
-    import openai
-    import reachy_sdk
-    import requests
+for package_py, package_pip in packages.items():
+    try:
+        exec("import " + package_py)
+    except ModuleNotFoundError:
+        print(
+            package_py
+            + " module not found, installing '"
+            + package_pip
+            + "' with pip..."
+        )
 
-except:
-    print("openai and/or reachy_sdk module not found, installing with pip...")
+        install_package(package_pip)
+        exec("import " + package_py)
 
-    install_packages(["openai", "reachy-sdk", "requests"])
+        print(package_py + " successfully imported")
 
-    import openai
-    import reachy_sdk
-    import requests
-
-    print("Done installing packages")
+print("Done installing packages")
 
 
 # Global object
