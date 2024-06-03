@@ -8,6 +8,7 @@ from bpy.utils import register_class, unregister_class
 
 from .reachy_marionette import ReachyMarionette
 from .reachy_gpt import ReachyGPT
+from .reachy_voice import ReachyVoice
 
 # Addon metadata
 bl_info = {
@@ -68,9 +69,10 @@ for package_py, package_pip in packages.items():
 print("Done installing packages")
 
 
-# Global object
+# Global objects
 reachy = ReachyMarionette()
 reachy_gpt = ReachyGPT()
+reachy_voice = ReachyVoice()
 
 
 # Classes
@@ -208,6 +210,22 @@ class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
+class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
+    # Select action
+
+    bl_idname = "reachy_marionette.record_audio"
+    bl_label = "Record audio from microphone for 5 seconds."
+
+    def execute(self, context):
+
+        recording = reachy_voice.record_audio(5, self.report)
+        transcription = reachy_voice.transcribe_audio(recording)
+
+        self.report({"INFO"}, "Transcription: " + transcription)
+
+        return {"FINISHED"}
+
+
 class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
 
     bl_idname = "reachy_marionette.activate_gpt"
@@ -283,6 +301,12 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         )
 
         layout.row().operator(
+            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+            text="Record Audio",
+            icon="ARMATURE_DATA",
+        )
+
+        layout.row().operator(
             REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
             text="Activate GPT",
             icon="ARMATURE_DATA",
@@ -304,6 +328,7 @@ classes = (
     REACHYMARIONETTE_OT_SendPose,
     REACHYMARIONETTE_OT_StreamPose,
     REACHYMARIONETTE_OT_AnimatePose,
+    REACHYMARIONETTE_OT_RecordAudio,
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
     REACHYMARIONETTE_PT_Panel,
