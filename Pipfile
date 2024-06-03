@@ -8,6 +8,9 @@ fake-bpy-module = "*"
 reachy-sdk = "*"
 openai = "*"
 requests = "*"
+sounddevice = "*"
+openai-whisper = "*"
+noisereduce = "*"
 
 [dev-packages]
 

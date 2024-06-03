@@ -1,4 +1,6 @@
 fake-bpy-module
 openai
+openai-whisper
 reachy-sdk
 requests
+sounddevice
