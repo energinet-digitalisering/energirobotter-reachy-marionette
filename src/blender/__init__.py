@@ -7,7 +7,7 @@ import bpy
 from bpy.utils import register_class, unregister_class
 
 from .reachy_marionette import ReachyMarionette
-from .actions_gpt import ActionsGPT
+from .reachy_gpt import ReachyGPT
 
 # Addon metadata
 bl_info = {
@@ -62,7 +62,7 @@ except:
 
 # Global object
 reachy = ReachyMarionette()
-gpt = ActionsGPT()
+reachy_gpt = ReachyGPT()
 
 
 # Classes
@@ -207,7 +207,7 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
 
     def execute(self, context):
 
-        if not gpt.activate(self.report):
+        if not reachy_gpt.activate(self.report):
             return {"CANCELLED"}
 
         return {"FINISHED"}
@@ -222,7 +222,7 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
     def execute(self, context):
         scene_properties = context.scene.scn_prop
 
-        gpt.send_request(scene_properties.Promt, reachy, self.report)
+        reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
 
         return {"FINISHED"}
 

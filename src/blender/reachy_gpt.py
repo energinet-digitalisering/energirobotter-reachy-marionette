@@ -5,7 +5,7 @@ import bpy
 import openai
 
 
-class ActionsGPT:
+class ReachyGPT:
 
     def __init__(self):
 
