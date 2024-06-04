@@ -3,4 +3,5 @@ openai
 openai-whisper
 reachy-sdk
 requests
+scipy
 sounddevice

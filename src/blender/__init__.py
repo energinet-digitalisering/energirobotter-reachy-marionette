@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 import subprocess
 import sys
@@ -22,11 +23,12 @@ bl_info = {
 }
 
 
-# Packages dictionary, key = python import name, value = pip install name
+# Packages dictionary - "python import name": "pip install name"
 packages = {
     "openai": "openai",
     "reachy_sdk": "reachy-sdk",
     "requests": "requests",
+    "scipy": "scipy",
     "sounddevice": "sounddevice",
     "whisper": "openai-whisper",
 }
@@ -53,6 +55,7 @@ def install_package(package):
 for package_py, package_pip in packages.items():
     try:
         exec("import " + package_py)
+
     except ModuleNotFoundError:
         print(
             package_py
@@ -66,7 +69,7 @@ for package_py, package_pip in packages.items():
 
         print(package_py + " successfully imported")
 
-print("Done installing packages")
+print("All packages installed")
 
 
 # Global objects
@@ -218,8 +221,15 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
     def execute(self, context):
 
-        recording = reachy_voice.record_audio(5, self.report)
-        transcription = reachy_voice.transcribe_audio(recording)
+        # audio_file_path = os.path.join(
+        #     os.path.dirname(bpy.data.filepath), "mic_input.wav"
+        # )
+
+        path = "//tmp/mic_input.wav"
+        audio_file_path = Path(bpy.path.abspath(path))
+
+        recording = reachy_voice.record_audio(5, self.report, file_path=audio_file_path)
+        transcription = reachy_voice.transcribe_audio(file_path=audio_file_path)
 
         self.report({"INFO"}, "Transcription: " + transcription)
 
