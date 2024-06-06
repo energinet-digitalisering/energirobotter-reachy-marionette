@@ -7,7 +7,8 @@ import bpy
 from bpy.utils import register_class, unregister_class
 
 from .reachy_marionette import ReachyMarionette
-from .actions_gpt import ActionsGPT
+from .reachy_gpt import ReachyGPT
+from .reachy_voice import ReachyVoice
 
 # Addon metadata
 bl_info = {
@@ -20,10 +21,19 @@ bl_info = {
     "category": "Animation",
 }
 
-# Install missing packages to Blenders Python install
+
+# Non standard Python packages - "python import name": "pip install name"
+packages = {
+    "openai": "openai",
+    "reachy_sdk": "reachy-sdk",
+    "requests": "requests",
+    "scipy": "scipy",
+    "sounddevice": "sounddevice",
+    "whisper": "openai-whisper",
+}
 
 
-def install_packages(packages):
+def install_package(package):
 
     if platform.system() == "win32":
 
@@ -33,36 +43,38 @@ def install_packages(packages):
         subprocess.call([python_exe, "-m", "ensurepip"])
         subprocess.call([python_exe, "-m", "pip", "install", "--upgrade", "pip"])
 
-        for package in packages:
-            subprocess.call(
-                [python_exe, "-m", "pip", "install", "--upgrade", package, "-t", target]
-            )
+        subprocess.call(
+            [python_exe, "-m", "pip", "install", "--upgrade", package, "-t", target]
+        )
 
     else:
-        for package in packages:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 
-try:
-    import openai
-    import reachy_sdk
-    import requests
+for package_py, package_pip in packages.items():
+    try:
+        exec("import " + package_py)
 
-except:
-    print("openai and/or reachy_sdk module not found, installing with pip...")
+    except ModuleNotFoundError:
+        print(
+            package_py
+            + " module not found, installing '"
+            + package_pip
+            + "' with pip..."
+        )
 
-    install_packages(["openai", "reachy-sdk", "requests"])
+        install_package(package_pip)
+        exec("import " + package_py)
 
-    import openai
-    import reachy_sdk
-    import requests
+        print(package_py + " successfully imported")
 
-    print("Done installing packages")
+print("All packages installed")
 
 
-# Global object
+# Global objects
 reachy = ReachyMarionette()
-gpt = ActionsGPT()
+reachy_gpt = ReachyGPT()
+reachy_voice = ReachyVoice()
 
 
 # Classes
@@ -207,7 +219,7 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
 
     def execute(self, context):
 
-        if not gpt.activate(self.report):
+        if not reachy_gpt.activate(self.report):
             return {"CANCELLED"}
 
         return {"FINISHED"}
@@ -222,7 +234,28 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
     def execute(self, context):
         scene_properties = context.scene.scn_prop
 
-        gpt.send_request(scene_properties.Promt, reachy, self.report)
+        reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+
+        return {"FINISHED"}
+
+
+class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
+    # Select action
+
+    bl_idname = "reachy_marionette.record_audio"
+    bl_label = "Record audio from microphone for 5 seconds."
+
+    def execute(self, context):
+
+        audio_file_path = bpy.path.abspath("//mic_input.wav")
+
+        reachy_voice.record_audio(audio_file_path, 3, self.report)
+
+        transcription = reachy_voice.transcribe_audio(
+            audio_file_path, self.report, language="da"
+        )
+
+        reachy_gpt.send_request(transcription, reachy, self.report)
 
         return {"FINISHED"}
 
@@ -288,6 +321,12 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
             icon="ARMATURE_DATA",
         )
 
+        layout.row().operator(
+            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+            text="Record Audio",
+            icon="ARMATURE_DATA",
+        )
+
 
 classes = (
     SceneProperties,
@@ -298,6 +337,7 @@ classes = (
     REACHYMARIONETTE_OT_AnimatePose,
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
+    REACHYMARIONETTE_OT_RecordAudio,
     REACHYMARIONETTE_PT_Panel,
 )
 

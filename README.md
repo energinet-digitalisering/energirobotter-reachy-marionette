@@ -27,8 +27,11 @@ Tested with:
 - Unity >= 2022.3.15f1
 - VSCode
 - Python == 3.9.7
+- FFmpeg == 2024-06-03-git-77ad449911-full_build-www.gyan.dev
 
-To simply use the addon, only Blender and a Reachy robot (real or simulated with Unity) is required.
+You need to be connected to a Reachy robot (real or simulated with Unity).
+
+For voice commands, your system needs to have FFmpeg installed. Instructions for Windows [here](https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/). 
 
 
 ##  2. <a name='Setup'></a>Setup 
