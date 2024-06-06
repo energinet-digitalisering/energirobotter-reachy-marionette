@@ -11,6 +11,7 @@ requests = "*"
 sounddevice = "*"
 openai-whisper = "*"
 noisereduce = "*"
+scipy = "*"
 
 [dev-packages]
 
