@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import platform
 import subprocess
 import sys
@@ -23,7 +22,7 @@ bl_info = {
 }
 
 
-# Packages dictionary - "python import name": "pip install name"
+# Non standard Python packages - "python import name": "pip install name"
 packages = {
     "openai": "openai",
     "reachy_sdk": "reachy-sdk",
@@ -213,29 +212,6 @@ class REACHYMARIONETTE_OT_AnimatePose(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
 
-class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
-    # Select action
-
-    bl_idname = "reachy_marionette.record_audio"
-    bl_label = "Record audio from microphone for 5 seconds."
-
-    def execute(self, context):
-
-        # audio_file_path = os.path.join(
-        #     os.path.dirname(bpy.data.filepath), "mic_input.wav"
-        # )
-
-        path = "//tmp/mic_input.wav"
-        audio_file_path = Path(bpy.path.abspath(path))
-
-        recording = reachy_voice.record_audio(5, self.report, file_path=audio_file_path)
-        transcription = reachy_voice.transcribe_audio(file_path=audio_file_path)
-
-        self.report({"INFO"}, "Transcription: " + transcription)
-
-        return {"FINISHED"}
-
-
 class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
 
     bl_idname = "reachy_marionette.activate_gpt"
@@ -259,6 +235,27 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
         scene_properties = context.scene.scn_prop
 
         reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+
+        return {"FINISHED"}
+
+
+class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
+    # Select action
+
+    bl_idname = "reachy_marionette.record_audio"
+    bl_label = "Record audio from microphone for 5 seconds."
+
+    def execute(self, context):
+
+        audio_file_path = bpy.path.abspath("//mic_input.wav")
+
+        reachy_voice.record_audio(audio_file_path, 3, self.report)
+
+        transcription = reachy_voice.transcribe_audio(
+            audio_file_path, self.report, language="da"
+        )
+
+        reachy_gpt.send_request(transcription, reachy, self.report)
 
         return {"FINISHED"}
 
@@ -311,12 +308,6 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         )
 
         layout.row().operator(
-            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
-            text="Record Audio",
-            icon="ARMATURE_DATA",
-        )
-
-        layout.row().operator(
             REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
             text="Activate GPT",
             icon="ARMATURE_DATA",
@@ -330,6 +321,12 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
             icon="ARMATURE_DATA",
         )
 
+        layout.row().operator(
+            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+            text="Record Audio",
+            icon="ARMATURE_DATA",
+        )
+
 
 classes = (
     SceneProperties,
@@ -338,9 +335,9 @@ classes = (
     REACHYMARIONETTE_OT_SendPose,
     REACHYMARIONETTE_OT_StreamPose,
     REACHYMARIONETTE_OT_AnimatePose,
-    REACHYMARIONETTE_OT_RecordAudio,
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
+    REACHYMARIONETTE_OT_RecordAudio,
     REACHYMARIONETTE_PT_Panel,
 )
 
