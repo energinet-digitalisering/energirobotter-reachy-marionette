@@ -1,3 +1,4 @@
+import json
 import os
 from requests.exceptions import RequestException
 
@@ -28,13 +29,14 @@ class ReachyGPT:
         self.system_prompt = """"
             You are a humanoid robot named Reachy. You can emote using the actions ReachyWave, ReachyDance, ReachyYes, ReachyNo, and ReachyShrug.
 
-            - Respond to user input with the most appropriate action's name.
-            - If no other action is more appropriate, use ReachyShrug.
+            - Respond to user input with a text response and the most appropriate action's name
+            - If no other action is more appropriate, use ReachyShrug
+            - Please format your response as JSON with two keys: "action" and "answer"
 
             Example:
 
             user: Hello Reachy
-            assistant: ReachyWave
+            assistant: {"action": "ReachyWave", "answer": "Hej! Hvordan kan jeg hjælpe?"}
             """
 
     def activate(self, report_function):
@@ -61,7 +63,16 @@ class ReachyGPT:
             )
 
             if hasattr(response, "choices") and len(response.choices) > 0:
-                return response.choices[0].message.content
+                message = json.loads(response.choices[0].message.content)
+
+                if "action" not in message and "answer" not in message:
+                    report_function(
+                        {"ERROR"}, "Message not formatted correctly: " + str(message)
+                    )
+                    return "Sorry, I couldn't generate a response."
+
+                return message
+
             else:
                 report_function({"ERROR"}, "No completion choices returned.")
                 return "Sorry, I couldn't generate a response."
@@ -102,13 +113,18 @@ class ReachyGPT:
         # Get response from ChatGPT, and send action / animation to Reachy
         response = self.get_gpt_response(messages, report_function)
 
-        if response not in self.action_catalouge:
-            report_function({"ERROR"}, "Response was not an action: " + response)
-            response = "ReachyShrug"
+        if response["action"] not in self.action_catalouge:
+            report_function(
+                {"ERROR"}, "Response was not an action: " + response["action"]
+            )
+            response["action"] = "ReachyShrug"
 
-        report_function({"INFO"}, "Chosen action: " + response)
+        report_function({"INFO"}, "Chosen action: " + response["action"])
+        report_function({"INFO"}, response["answer"])
 
-        bpy.context.object.animation_data.action = bpy.data.actions.get(response)
+        bpy.context.object.animation_data.action = bpy.data.actions.get(
+            response["action"]
+        )
 
         if reachy_object.reachy != None:
             # Send action to Reachy robot
