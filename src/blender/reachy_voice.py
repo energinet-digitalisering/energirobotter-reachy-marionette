@@ -45,3 +45,5 @@ class ReachyVoice:
             report_function(
                 {"ERROR"}, "File path '" + str(file_path) + "' does not exist."
             )
+
+    def speak_audio(self, text): ...
