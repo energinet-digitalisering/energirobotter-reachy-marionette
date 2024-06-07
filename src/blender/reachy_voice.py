@@ -29,7 +29,7 @@ class ReachyVoice:
         sd.wait()  # Wait until the recording is finished
 
         wav.write(file_path, samplerate, recording)
-        report_function({"INFO"}, "Recording saved to" + str(file_path))
+        report_function({"INFO"}, "Recording saved to " + str(file_path))
 
     def transcribe_audio(self, file_path: str, report_function, language="en"):
 

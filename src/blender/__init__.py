@@ -249,12 +249,15 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
         audio_file_path = bpy.path.abspath("//mic_input.wav")
 
+        # Record audio sample
         reachy_voice.record_audio(audio_file_path, 3, self.report)
 
+        # Convert to text
         transcription = reachy_voice.transcribe_audio(
             audio_file_path, self.report, language="da"
         )
 
+        # Send promt to ChatGPT
         response = reachy_gpt.send_request(transcription, reachy, self.report)
         reachy_voice.speak_audio(response)
 
