@@ -255,7 +255,7 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
             audio_file_path, self.report, language="da"
         )
 
-        reachy_gpt.send_request(transcription, reachy, self.report)
+        response = reachy_gpt.send_request(transcription, reachy, self.report)
 
         return {"FINISHED"}
 

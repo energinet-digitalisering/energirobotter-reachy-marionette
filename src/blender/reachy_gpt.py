@@ -139,3 +139,5 @@ class ReachyGPT:
             bpy.ops.screen.animation_cancel()
             bpy.ops.screen.frame_jump()
             bpy.ops.screen.animation_play()
+
+        return response
