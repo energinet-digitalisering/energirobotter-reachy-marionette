@@ -16,7 +16,7 @@ class ReachyGPT:
 
         self.gpt_model = "gpt-4o"
         self.max_tokens = 1000
-        self.chat_history_len = 2
+        self.chat_history_len = 5
 
         self.action_catalouge = [
             "ReachyWave",
