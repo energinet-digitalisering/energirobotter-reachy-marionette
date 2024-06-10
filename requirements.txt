@@ -1,6 +1,8 @@
 fake-bpy-module
+gTTS
 openai
 openai-whisper
+pydub
 reachy-sdk
 requests
 scipy

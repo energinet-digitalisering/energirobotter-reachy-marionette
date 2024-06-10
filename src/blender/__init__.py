@@ -6,10 +6,6 @@ import sys
 import bpy
 from bpy.utils import register_class, unregister_class
 
-from .reachy_marionette import ReachyMarionette
-from .reachy_gpt import ReachyGPT
-from .reachy_voice import ReachyVoice
-
 # Addon metadata
 bl_info = {
     "name": "ReachyMarionette",
@@ -24,7 +20,9 @@ bl_info = {
 
 # Non standard Python packages - "python import name": "pip install name"
 packages = {
+    "gtts": "gTTS",
     "openai": "openai",
+    "pydub": "pydub",
     "reachy_sdk": "reachy-sdk",
     "requests": "requests",
     "scipy": "scipy",
@@ -70,6 +68,10 @@ for package_py, package_pip in packages.items():
 
 print("All packages installed")
 
+# Load addon modules
+from .reachy_marionette import ReachyMarionette
+from .reachy_gpt import ReachyGPT
+from .reachy_voice import ReachyVoice
 
 # Global objects
 reachy = ReachyMarionette()
@@ -234,7 +236,8 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
     def execute(self, context):
         scene_properties = context.scene.scn_prop
 
-        reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+        response = reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+        reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
@@ -249,13 +252,17 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
         audio_file_path = bpy.path.abspath("//mic_input.wav")
 
+        # Record audio sample
         reachy_voice.record_audio(audio_file_path, 3, self.report)
 
+        # Convert to text
         transcription = reachy_voice.transcribe_audio(
             audio_file_path, self.report, language="da"
         )
 
-        reachy_gpt.send_request(transcription, reachy, self.report)
+        # Send promt to ChatGPT
+        response = reachy_gpt.send_request(transcription, reachy, self.report)
+        reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
