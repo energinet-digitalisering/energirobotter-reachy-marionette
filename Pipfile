@@ -11,6 +11,8 @@ requests = "*"
 sounddevice = "*"
 openai-whisper = "*"
 scipy = "*"
+gtts = "*"
+pydub = "*"
 
 [dev-packages]
 
