@@ -20,7 +20,9 @@ bl_info = {
 
 # Non standard Python packages - "python import name": "pip install name"
 packages = {
+    "gtts": "gTTS",
     "openai": "openai",
+    "pydub": "pydub",
     "reachy_sdk": "reachy-sdk",
     "requests": "requests",
     "scipy": "scipy",
@@ -234,7 +236,8 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
     def execute(self, context):
         scene_properties = context.scene.scn_prop
 
-        reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+        response = reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
+        reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
@@ -259,7 +262,7 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
         # Send promt to ChatGPT
         response = reachy_gpt.send_request(transcription, reachy, self.report)
-        reachy_voice.speak_audio(response)
+        reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 

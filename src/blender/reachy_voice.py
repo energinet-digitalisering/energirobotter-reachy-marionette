@@ -1,4 +1,8 @@
+from gtts import gTTS
+import io
+import numpy as np
 import os
+import pydub
 import scipy.io.wavfile as wav
 import sounddevice as sd
 import whisper
@@ -46,4 +50,29 @@ class ReachyVoice:
                 {"ERROR"}, "File path '" + str(file_path) + "' does not exist."
             )
 
-    def speak_audio(self, text): ...
+    def gtts_to_numpy(self, tts: gTTS):
+
+        # Load into .mp3 format
+        mp3_fp = io.BytesIO()
+        tts.write_to_fp(mp3_fp)
+        mp3_fp.seek(0)  # Set buffer position at beginning
+
+        # Read mp3 data
+        audio = pydub.AudioSegment.from_file(mp3_fp, format="mp3")
+
+        # Convert to NumPy array
+        samples = np.array(audio.get_array_of_samples())
+
+        # Normalize the audio data to the range [-1, 1]
+        samples = samples / (2**15)
+
+        return samples, audio.frame_rate
+
+    def speak_audio(self, text: str, language="en"):
+
+        # Generate audio
+        tts = gTTS(text=text, lang=language)
+
+        audio, frame_rate = self.gtts_to_numpy(tts)
+
+        sd.play(audio, frame_rate)
