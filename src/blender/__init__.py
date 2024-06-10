@@ -6,10 +6,6 @@ import sys
 import bpy
 from bpy.utils import register_class, unregister_class
 
-from .reachy_marionette import ReachyMarionette
-from .reachy_gpt import ReachyGPT
-from .reachy_voice import ReachyVoice
-
 # Addon metadata
 bl_info = {
     "name": "ReachyMarionette",
@@ -70,6 +66,10 @@ for package_py, package_pip in packages.items():
 
 print("All packages installed")
 
+# Load addon modules
+from .reachy_marionette import ReachyMarionette
+from .reachy_gpt import ReachyGPT
+from .reachy_voice import ReachyVoice
 
 # Global objects
 reachy = ReachyMarionette()
