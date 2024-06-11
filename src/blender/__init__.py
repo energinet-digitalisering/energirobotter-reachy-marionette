@@ -101,7 +101,7 @@ class SceneProperties(bpy.types.PropertyGroup):
 
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
-        description="Reachy's IP adress (default = localhost)",
+        description="Reachy's IP address (default = localhost).",
         default="localhost",
     )  # type: ignore (stops warning squiggles)
 
@@ -267,14 +267,14 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
+class REACHYMARIONETTE_PT_PanelConnection(bpy.types.Panel):
     # Addon panel displaying options
 
-    bl_label = "Stream Angles"
+    bl_label = "Connection"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "ReachyMarionette"
-    bl_options = {"DEFAULT_CLOSED"}
+    bl_options = {"HEADER_LAYOUT_EXPAND"}
 
     def draw(self, context):
         layout = self.layout
@@ -294,7 +294,21 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
             icon="UNLINKED",
         )
 
-        layout.prop(scene_properties, "Kinematics")
+
+class REACHYMARIONETTE_PT_PanelManual(bpy.types.Panel):
+    # Addon panel displaying options
+
+    bl_label = "Manual Control"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "ReachyMarionette"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        scene_properties = context.scene.scn_prop
+
+        layout.prop(scene_properties, "Kinematics", expand=True)
 
         layout.row().operator(
             REACHYMARIONETTE_OT_SendPose.bl_idname,
@@ -314,25 +328,19 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
             icon="ARMATURE_DATA",
         )
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
-            text="Activate GPT",
-            icon="ARMATURE_DATA",
-        )
 
-        layout.prop(scene_properties, "Promt")
+class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
+    # Addon panel displaying options
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_SendRequest.bl_idname,
-            text="Send Request",
-            icon="ARMATURE_DATA",
-        )
+    bl_label = "AI Control"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "ReachyMarionette"
+    bl_options = {"DEFAULT_CLOSED"}
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
-            text="Record Audio",
-            icon="ARMATURE_DATA",
-        )
+    def draw(self, context):
+        layout = self.layout
+        scene_properties = context.scene.scn_prop
 
 
 classes = (
@@ -345,7 +353,9 @@ classes = (
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
     REACHYMARIONETTE_OT_RecordAudio,
-    REACHYMARIONETTE_PT_Panel,
+    REACHYMARIONETTE_PT_PanelConnection,
+    REACHYMARIONETTE_PT_PanelManual,
+    REACHYMARIONETTE_PT_PanelAI,
 )
 
 
