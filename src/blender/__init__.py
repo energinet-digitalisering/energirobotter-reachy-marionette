@@ -99,6 +99,10 @@ class SceneProperties(bpy.types.PropertyGroup):
             elif scene_properties.Kinematics == "IK":
                 bone.constraints["IK"].enabled = True
 
+    GPTActivated: bpy.props.BoolProperty(
+        description="OpenAI Key was verified and ready", default=False
+    )  # type: ignore (stops warning squiggles)
+
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
         description="Reachy's IP address (default = localhost).",
@@ -227,9 +231,12 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
     bl_label = "Start ChatGPT client"
 
     def execute(self, context):
+        scene_properties = context.scene.scn_prop
 
         if not reachy_gpt.activate(self.report):
             return {"CANCELLED"}
+
+        scene_properties.GPTActivated = True
 
         return {"FINISHED"}
 
@@ -348,6 +355,21 @@ class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene_properties = context.scene.scn_prop
+
+        if not scene_properties.GPTActivated:
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+                text="Activate API key",
+                icon="RADIOBUT_OFF",
+            )
+
+        else:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+                text="API key is active",
+                icon="RADIOBUT_ON",
+            )
 
         layout.prop(scene_properties, "PromtType", expand=True)
 
