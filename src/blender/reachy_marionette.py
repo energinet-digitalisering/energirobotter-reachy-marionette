@@ -1,7 +1,8 @@
 from enum import Enum
+import functools
 import mathutils
 import numpy as np
-import functools
+import socket
 import threading
 
 import bpy
@@ -81,7 +82,31 @@ class ReachyMarionette:
 
         return np.rad2deg(self.get_bones_rotation(bone, axis_rot))
 
+    def ensure_connection(self, report_function, ip="localhost", timeout=0.1):
+
+        port = 50055  # Reachy's sdk_port, only open when robot is connected
+
+        try:
+            with socket.create_connection((ip, port), timeout):
+                return True
+        except OSError:
+            report_function(
+                {"WARNING"},
+                "Reachy connection not available",
+            )
+
+            if self.reachy != None:
+                report_function(
+                    {"WARNING"},
+                    "Deleting existing reachy instance, Reachy was not shut down properly",
+                )
+                self.reachy = None
+
+            return False
+
     def connect_reachy(self, report_function, ip="localhost"):
+
+        self.ensure_connection(report_function)
 
         if self.reachy != None:
             report_function({"INFO"}, "Connection already established at '%s'" % ip)
@@ -97,6 +122,8 @@ class ReachyMarionette:
             report_function({"ERROR"}, ("Could not find connection at '%s'" % ip))
 
     def disconnect_reachy(self, report_function):
+
+        self.ensure_connection(report_function)
 
         # Try connection
         if self.reachy != None:
@@ -119,6 +146,8 @@ class ReachyMarionette:
         )
 
     def send_angles(self, report_function, duration=1.0, threaded=False):
+
+        self.ensure_connection(report_function)
 
         if self.reachy == None:
             report_function({"ERROR"}, "Reachy not connected!")
@@ -161,6 +190,9 @@ class ReachyMarionette:
             self.reachy_goto(joint_angle_positions, duration)
 
     def stream_angles(self, report_function):
+
+        self.ensure_connection(report_function)
+
         if self.state == State.STREAMING:
             # Duration is faster than the interval, to finish before the next thread
             self.send_angles(
@@ -171,6 +203,8 @@ class ReachyMarionette:
             return None
 
     def stream_angles_enable(self, report_function):
+
+        self.ensure_connection(report_function)
 
         if not self.state == State.STREAMING:
             self.state = State.STREAMING
@@ -184,6 +218,8 @@ class ReachyMarionette:
             report_function({"INFO"}, "Streaming is already in progress,")
 
     def animate_angles(self, report_function):
+
+        self.ensure_connection(report_function)
 
         if not self.state == State.ANIMATING:
             self.state = State.ANIMATING
