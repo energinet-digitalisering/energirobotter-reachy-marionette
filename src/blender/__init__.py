@@ -113,6 +113,13 @@ class SceneProperties(bpy.types.PropertyGroup):
         update=callback_kinematics,
     )  # type: ignore (stops warning squiggles)
 
+    PromtType: bpy.props.EnumProperty(
+        name="Promt Type",
+        description="Choose if promt is provided as text or speech.",
+        items=[("Text", "Text", ""), ("Speech", "Speech", "")],
+        default="Text",
+    )  # type: ignore (stops warning squiggles)
+
     Promt: bpy.props.StringProperty(
         name="Promt", description="Promt for ChatGPT", default=""
     )  # type: ignore (stops warning squiggles)
@@ -341,6 +348,26 @@ class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene_properties = context.scene.scn_prop
+
+        layout.prop(scene_properties, "PromtType", expand=True)
+
+        if scene_properties.PromtType == "Text":
+
+            layout.prop(scene_properties, "Promt")
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_SendRequest.bl_idname,
+                text="Send Request",
+                icon="URL",
+            )
+
+        elif scene_properties.PromtType == "Speech":
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+                text="Record Audio",
+                icon="SPEAKER",
+            )
 
 
 classes = (
