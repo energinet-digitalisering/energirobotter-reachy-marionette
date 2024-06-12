@@ -11,7 +11,6 @@ class ReachyGPT:
     def __init__(self):
 
         self.client = None
-        self.api_key = None
         self.chat_history = []
 
         self.gpt_model = "gpt-4o"

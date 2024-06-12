@@ -99,9 +99,6 @@ class SceneProperties(bpy.types.PropertyGroup):
             elif scene_properties.Kinematics == "IK":
                 bone.constraints["IK"].enabled = True
 
-    GPTActivated: bpy.props.BoolProperty(
-        description="OpenAI Key was verified and ready", default=False
-    )  # type: ignore (stops warning squiggles)
 
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
@@ -236,8 +233,6 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
         if not reachy_gpt.activate(self.report):
             return {"CANCELLED"}
 
-        scene_properties.GPTActivated = True
-
         return {"FINISHED"}
 
 
@@ -356,7 +351,7 @@ class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
         layout = self.layout
         scene_properties = context.scene.scn_prop
 
-        if not scene_properties.GPTActivated:
+        if reachy_gpt.client == None:
 
             layout.row().operator(
                 REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
