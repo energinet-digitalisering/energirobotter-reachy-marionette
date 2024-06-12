@@ -87,18 +87,26 @@ class SceneProperties(bpy.types.PropertyGroup):
 
     def callback_kinematics(self, context):
         # Toggle IK constraint on bones that has thems
-        scene_properties = context.scene.scn_prop
 
         for bone in bpy.context.active_object.pose.bones:
 
             if not "IK" in bone.constraints:
                 continue
 
-            if scene_properties.Kinematics == "FK":
+            if self.Kinematics == "FK":
                 bone.constraints["IK"].enabled = False
-            elif scene_properties.Kinematics == "IK":
+            elif self.Kinematics == "IK":
                 bone.constraints["IK"].enabled = True
 
+    def callback_streaming(self, context):
+
+        if self.Streaming:
+            bpy.ops.reachy_marionette.stream_angles("INVOKE_DEFAULT")
+
+            if reachy.reachy == None:
+                self.Streaming = False
+
+        return
 
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
@@ -112,6 +120,12 @@ class SceneProperties(bpy.types.PropertyGroup):
         items=[("FK", "FK", ""), ("IK", "IK", "")],
         default="FK",
         update=callback_kinematics,
+    )  # type: ignore (stops warning squiggles)
+
+    Streaming: bpy.props.BoolProperty(
+        description="If addon is currently streaming angles to Reachy.",
+        default=False,
+        update=callback_streaming,
     )  # type: ignore (stops warning squiggles)
 
     PromtType: bpy.props.EnumProperty(
@@ -174,12 +188,18 @@ class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
         print("Stream starting...")
 
     def __del__(self):
+        reachy.set_state_idle()
+
         print("Stream ended")
 
     def modal(self, context, event):
-        if event.type == "ESC":
-            reachy.set_state_idle()
+        scene_properties = context.scene.scn_prop
 
+        if not scene_properties.Streaming:
+            self.report({"INFO"}, "Stopping stream")
+            return {"FINISHED"}
+
+        if event.type == "ESC":
             self.report({"INFO"}, "ESC key pressed, stopping stream")
             return {"FINISHED"}
 
@@ -325,11 +345,9 @@ class REACHYMARIONETTE_PT_PanelManual(bpy.types.Panel):
             icon="ARMATURE_DATA",
         )
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_StreamPose.bl_idname,
-            text="Stream Pose",
-            icon="ARMATURE_DATA",
-        )
+        label = "Streaming..." if scene_properties.Streaming else "Stream Pose"
+        icon = "RADIOBUT_ON" if scene_properties.Streaming else "RADIOBUT_OFF"
+        layout.prop(scene_properties, "Streaming", text=label, icon=icon, toggle=True)
 
         layout.row().operator(
             REACHYMARIONETTE_OT_AnimatePose.bl_idname,
