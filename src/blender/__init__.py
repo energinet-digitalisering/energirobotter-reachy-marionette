@@ -321,17 +321,19 @@ class REACHYMARIONETTE_PT_PanelConnection(bpy.types.Panel):
 
         layout.prop(scene_properties, "IPaddress")
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
-            text="Connect to Reachy",
-            icon="PLUGIN",
-        )
+        if reachy.reachy == None:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
+                text="Connect to Reachy",
+                icon="PLUGIN",
+            )
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
-            text="Disconnect Reachy",
-            icon="UNLINKED",
-        )
+        else:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
+                text="Disconnect Reachy",
+                icon="UNLINKED",
+            )
 
 
 class REACHYMARIONETTE_PT_PanelManual(bpy.types.Panel):
@@ -362,7 +364,7 @@ class REACHYMARIONETTE_PT_PanelManual(bpy.types.Panel):
         layout.row().operator(
             REACHYMARIONETTE_OT_AnimatePose.bl_idname,
             text="Animate Pose",
-            icon="ARMATURE_DATA",
+            icon="PLAY",
         )
 
 
