@@ -128,6 +128,11 @@ class SceneProperties(bpy.types.PropertyGroup):
         update=callback_streaming,
     )  # type: ignore (stops warning squiggles)
 
+    Speaker: bpy.props.BoolProperty(
+        description="If responses from ChatGPT are played through speaker.",
+        default=False,
+    )  # type: ignore (stops warning squiggles)
+
     PromtType: bpy.props.EnumProperty(
         name="Promt Type",
         description="Choose if promt is provided as text or speech.",
@@ -266,7 +271,9 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
         scene_properties = context.scene.scn_prop
 
         response = reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
-        reachy_voice.speak_audio(response["answer"], language="da")
+
+        if scene_properties.Speaker:
+            reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
@@ -278,6 +285,7 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
     bl_label = "Record audio from microphone for 5 seconds."
 
     def execute(self, context):
+        scene_properties = context.scene.scn_prop
 
         audio_file_path = bpy.path.abspath("//mic_input.wav")
 
@@ -291,7 +299,9 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
         # Send promt to ChatGPT
         response = reachy_gpt.send_request(transcription, reachy, self.report)
-        reachy_voice.speak_audio(response["answer"], language="da")
+
+        if scene_properties.Speaker:
+            reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
@@ -383,6 +393,10 @@ class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
                 text="API key is active",
                 icon="RADIOBUT_ON",
             )
+
+        label = "Sound ON" if scene_properties.Speaker else "Sound OFF"
+        icon = "MUTE_IPO_ON" if scene_properties.Speaker else "MUTE_IPO_OFF"
+        layout.prop(scene_properties, "Speaker", text=label, icon=icon, toggle=True)
 
         layout.prop(scene_properties, "PromtType", expand=True)
 
