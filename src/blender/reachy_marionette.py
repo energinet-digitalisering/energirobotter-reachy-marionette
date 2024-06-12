@@ -35,7 +35,7 @@ class ReachyMarionette:
             thread.join()
 
     def set_state_idle(self):
-        self.state == State.IDLE
+        self.state = State.IDLE
 
     # Helper functions from rigify plugin
 
