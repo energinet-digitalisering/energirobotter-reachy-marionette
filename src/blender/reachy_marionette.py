@@ -13,9 +13,9 @@ from reachy_sdk.trajectory.interpolation import InterpolationMode
 
 
 class State(Enum):
-    IDLE = 1
-    STREAMING = 2
-    ANIMATING = 3
+    IDLE = 0
+    STREAMING = 1
+    ANIMATING = 2
 
 
 class ReachyMarionette:
@@ -35,7 +35,7 @@ class ReachyMarionette:
             thread.join()
 
     def set_state_idle(self):
-        self.state == State.IDLE
+        self.state = State.IDLE
 
     # Helper functions from rigify plugin
 

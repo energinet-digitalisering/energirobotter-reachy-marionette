@@ -87,21 +87,30 @@ class SceneProperties(bpy.types.PropertyGroup):
 
     def callback_kinematics(self, context):
         # Toggle IK constraint on bones that has thems
-        scene_properties = context.scene.scn_prop
 
         for bone in bpy.context.active_object.pose.bones:
 
             if not "IK" in bone.constraints:
                 continue
 
-            if scene_properties.Kinematics == "FK":
+            if self.Kinematics == "FK":
                 bone.constraints["IK"].enabled = False
-            elif scene_properties.Kinematics == "IK":
+            elif self.Kinematics == "IK":
                 bone.constraints["IK"].enabled = True
+
+    def callback_streaming(self, context):
+
+        if self.Streaming:
+            bpy.ops.reachy_marionette.stream_angles("INVOKE_DEFAULT")
+
+            if reachy.reachy == None:
+                self.Streaming = False
+
+        return
 
     IPaddress: bpy.props.StringProperty(
         name="IP adress",
-        description="Reachy's IP adress (default = localhost)",
+        description="Reachy's IP address (default = localhost).",
         default="localhost",
     )  # type: ignore (stops warning squiggles)
 
@@ -111,6 +120,24 @@ class SceneProperties(bpy.types.PropertyGroup):
         items=[("FK", "FK", ""), ("IK", "IK", "")],
         default="FK",
         update=callback_kinematics,
+    )  # type: ignore (stops warning squiggles)
+
+    Streaming: bpy.props.BoolProperty(
+        description="If addon is currently streaming angles to Reachy.",
+        default=False,
+        update=callback_streaming,
+    )  # type: ignore (stops warning squiggles)
+
+    Speaker: bpy.props.BoolProperty(
+        description="If responses from ChatGPT are played through speaker.",
+        default=False,
+    )  # type: ignore (stops warning squiggles)
+
+    PromtType: bpy.props.EnumProperty(
+        name="Promt Type",
+        description="Choose if promt is provided as text or speech.",
+        items=[("Text", "Text", ""), ("Speech", "Speech", "")],
+        default="Text",
     )  # type: ignore (stops warning squiggles)
 
     Promt: bpy.props.StringProperty(
@@ -166,12 +193,18 @@ class REACHYMARIONETTE_OT_StreamPose(bpy.types.Operator):
         print("Stream starting...")
 
     def __del__(self):
+        reachy.set_state_idle()
+
         print("Stream ended")
 
     def modal(self, context, event):
-        if event.type == "ESC":
-            reachy.set_state_idle()
+        scene_properties = context.scene.scn_prop
 
+        if not scene_properties.Streaming:
+            self.report({"INFO"}, "Stopping stream")
+            return {"FINISHED"}
+
+        if event.type == "ESC":
             self.report({"INFO"}, "ESC key pressed, stopping stream")
             return {"FINISHED"}
 
@@ -220,6 +253,7 @@ class REACHYMARIONETTE_OT_ActivateGPT(bpy.types.Operator):
     bl_label = "Start ChatGPT client"
 
     def execute(self, context):
+        scene_properties = context.scene.scn_prop
 
         if not reachy_gpt.activate(self.report):
             return {"CANCELLED"}
@@ -237,7 +271,9 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
         scene_properties = context.scene.scn_prop
 
         response = reachy_gpt.send_request(scene_properties.Promt, reachy, self.report)
-        reachy_voice.speak_audio(response["answer"], language="da")
+
+        if scene_properties.Speaker:
+            reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
@@ -249,6 +285,7 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
     bl_label = "Record audio from microphone for 5 seconds."
 
     def execute(self, context):
+        scene_properties = context.scene.scn_prop
 
         audio_file_path = bpy.path.abspath("//mic_input.wav")
 
@@ -262,15 +299,47 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
 
         # Send promt to ChatGPT
         response = reachy_gpt.send_request(transcription, reachy, self.report)
-        reachy_voice.speak_audio(response["answer"], language="da")
+
+        if scene_properties.Speaker:
+            reachy_voice.speak_audio(response["answer"], language="da")
 
         return {"FINISHED"}
 
 
-class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
+class REACHYMARIONETTE_PT_PanelConnection(bpy.types.Panel):
     # Addon panel displaying options
 
-    bl_label = "Stream Angles"
+    bl_label = "Connection"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "ReachyMarionette"
+    bl_options = {"HEADER_LAYOUT_EXPAND"}
+
+    def draw(self, context):
+        layout = self.layout
+        scene_properties = context.scene.scn_prop
+
+        layout.prop(scene_properties, "IPaddress")
+
+        if reachy.reachy == None:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
+                text="Connect to Reachy",
+                icon="PLUGIN",
+            )
+
+        else:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
+                text="Disconnect Reachy",
+                icon="UNLINKED",
+            )
+
+
+class REACHYMARIONETTE_PT_PanelManual(bpy.types.Panel):
+    # Addon panel displaying options
+
+    bl_label = "Manual Control"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "ReachyMarionette"
@@ -280,21 +349,7 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
         layout = self.layout
         scene_properties = context.scene.scn_prop
 
-        layout.prop(scene_properties, "IPaddress")
-
-        layout.row().operator(
-            REACHYMARIONETTE_OT_ConnectReachy.bl_idname,
-            text="Connect to Reachy",
-            icon="PLUGIN",
-        )
-
-        layout.row().operator(
-            REACHYMARIONETTE_OT_DisconnectReachy.bl_idname,
-            text="Disconnect Reachy",
-            icon="UNLINKED",
-        )
-
-        layout.prop(scene_properties, "Kinematics")
+        layout.prop(scene_properties, "Kinematics", expand=True)
 
         layout.row().operator(
             REACHYMARIONETTE_OT_SendPose.bl_idname,
@@ -302,37 +357,68 @@ class REACHYMARIONETTE_PT_Panel(bpy.types.Panel):
             icon="ARMATURE_DATA",
         )
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_StreamPose.bl_idname,
-            text="Stream Pose",
-            icon="ARMATURE_DATA",
-        )
+        label = "Streaming..." if scene_properties.Streaming else "Stream Pose"
+        icon = "RADIOBUT_ON" if scene_properties.Streaming else "RADIOBUT_OFF"
+        layout.prop(scene_properties, "Streaming", text=label, icon=icon, toggle=True)
 
         layout.row().operator(
             REACHYMARIONETTE_OT_AnimatePose.bl_idname,
             text="Animate Pose",
-            icon="ARMATURE_DATA",
+            icon="PLAY",
         )
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
-            text="Activate GPT",
-            icon="ARMATURE_DATA",
-        )
 
-        layout.prop(scene_properties, "Promt")
+class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
+    # Addon panel displaying options
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_SendRequest.bl_idname,
-            text="Send Request",
-            icon="ARMATURE_DATA",
-        )
+    bl_label = "AI Control"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "ReachyMarionette"
+    bl_options = {"DEFAULT_CLOSED"}
 
-        layout.row().operator(
-            REACHYMARIONETTE_OT_RecordAudio.bl_idname,
-            text="Record Audio",
-            icon="ARMATURE_DATA",
-        )
+    def draw(self, context):
+        layout = self.layout
+        scene_properties = context.scene.scn_prop
+
+        if reachy_gpt.client == None:
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+                text="Activate API key",
+                icon="RADIOBUT_OFF",
+            )
+
+        else:
+            layout.row().operator(
+                REACHYMARIONETTE_OT_ActivateGPT.bl_idname,
+                text="API key is active",
+                icon="RADIOBUT_ON",
+            )
+
+        label = "Sound ON" if scene_properties.Speaker else "Sound OFF"
+        icon = "MUTE_IPO_ON" if scene_properties.Speaker else "MUTE_IPO_OFF"
+        layout.prop(scene_properties, "Speaker", text=label, icon=icon, toggle=True)
+
+        layout.prop(scene_properties, "PromtType", expand=True)
+
+        if scene_properties.PromtType == "Text":
+
+            layout.prop(scene_properties, "Promt")
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_SendRequest.bl_idname,
+                text="Send Request",
+                icon="URL",
+            )
+
+        elif scene_properties.PromtType == "Speech":
+
+            layout.row().operator(
+                REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+                text="Record Audio",
+                icon="SPEAKER",
+            )
 
 
 classes = (
@@ -345,7 +431,9 @@ classes = (
     REACHYMARIONETTE_OT_ActivateGPT,
     REACHYMARIONETTE_OT_SendRequest,
     REACHYMARIONETTE_OT_RecordAudio,
-    REACHYMARIONETTE_PT_Panel,
+    REACHYMARIONETTE_PT_PanelConnection,
+    REACHYMARIONETTE_PT_PanelManual,
+    REACHYMARIONETTE_PT_PanelAI,
 )
 
 
