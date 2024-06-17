@@ -18,9 +18,10 @@ class ReachyVoice:
         self.model = whisper.load_model(model_name)
         print("Whisper model ready")
 
-    def record_audio(self, file_path: str, duration, report_function):
 
-        report_function({"INFO"}, "Recording...")
+    def record_audio(self, file_path: str, duration, report_blender):
+
+        report_blender({"INFO"}, "Recording...")
 
         samplerate = 44100
         recording = sd.rec(
@@ -33,20 +34,20 @@ class ReachyVoice:
         sd.wait()  # Wait until the recording is finished
 
         wav.write(file_path, samplerate, recording)
-        report_function({"INFO"}, "Recording saved to " + str(file_path))
+        report_blender({"INFO"}, "Recording saved to " + str(file_path))
 
-    def transcribe_audio(self, file_path: str, report_function, language="en"):
+    def transcribe_audio(self, file_path: str, report_blender, language="en"):
 
         if os.path.exists(file_path):
             result = self.model.transcribe(str(file_path), language=language)
             transcription = result["text"]
 
-            report_function({"INFO"}, "Transcription: " + transcription)
+            report_blender({"INFO"}, "Transcription: " + transcription)
 
             return transcription
 
         else:
-            report_function(
+            report_blender(
                 {"ERROR"}, "File path '" + str(file_path) + "' does not exist."
             )
 

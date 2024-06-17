@@ -82,7 +82,7 @@ class ReachyMarionette:
 
         return np.rad2deg(self.get_bones_rotation(bone, axis_rot))
 
-    def ensure_connection(self, report_function, ip="localhost", timeout=0.1):
+    def ensure_connection(self, report_blender, ip="localhost", timeout=0.1):
 
         port = 50055  # Reachy's sdk_port, only open when robot is connected
 
@@ -90,13 +90,13 @@ class ReachyMarionette:
             with socket.create_connection((ip, port), timeout):
                 return True
         except OSError:
-            report_function(
+            report_blender(
                 {"WARNING"},
                 "Reachy connection not available",
             )
 
             if self.reachy != None:
-                report_function(
+                report_blender(
                     {"WARNING"},
                     "Deleting existing reachy instance, Reachy was not shut down properly",
                 )
@@ -104,38 +104,38 @@ class ReachyMarionette:
 
             return False
 
-    def connect_reachy(self, report_function, ip="localhost"):
+    def connect_reachy(self, report_blender, ip="localhost"):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         if self.reachy != None:
-            report_function({"INFO"}, "Connection already established at '%s'" % ip)
+            report_blender({"INFO"}, "Connection already established at '%s'" % ip)
             return
 
         # Try connection
         try:
             self.reachy = ReachySDK(host=ip)
             self.reachy.turn_on("reachy")
-            report_function({"INFO"}, "Connection established succesfully!")
+            report_blender({"INFO"}, "Connection established succesfully!")
 
         except:
-            report_function({"ERROR"}, ("Could not find connection at '%s'" % ip))
+            report_blender({"ERROR"}, ("Could not find connection at '%s'" % ip))
 
-    def disconnect_reachy(self, report_function):
+    def disconnect_reachy(self, report_blender):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         # Try connection
         if self.reachy != None:
             self.reachy_reset_pose()
             # self.reachy.turn_off_smoothly('reachy')
             # flush_communication()
-            report_function({"WARNING"}, "Proper disconnection disabled!")
+            report_blender({"WARNING"}, "Proper disconnection disabled!")
             self.reachy = None
-            report_function({"INFO"}, "Disconnected Reachy")
+            report_blender({"INFO"}, "Disconnected Reachy")
 
         else:
-            report_function({"INFO"}, "No Reachy is connected")
+            report_blender({"INFO"}, "No Reachy is connected")
 
     def reachy_goto(self, joint_angles, duration=1.0):
 
@@ -145,16 +145,16 @@ class ReachyMarionette:
             interpolation_mode=InterpolationMode.MINIMUM_JERK,
         )
 
-    def send_angles(self, report_function, duration=1.0, threaded=False):
+    def send_angles(self, report_blender, duration=1.0, threaded=False):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         if self.reachy == None:
-            report_function({"ERROR"}, "Reachy not connected!")
+            report_blender({"ERROR"}, "Reachy not connected!")
             return
 
         if bpy.context.object.type != "ARMATURE":
-            report_function({"ERROR"}, "Please select Armature")
+            report_blender({"ERROR"}, "Please select Armature")
             return
 
         joint_angle_positions = {
@@ -189,37 +189,37 @@ class ReachyMarionette:
         else:
             self.reachy_goto(joint_angle_positions, duration)
 
-    def stream_angles(self, report_function):
+    def stream_angles(self, report_blender):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         if self.state == State.STREAMING:
             # Duration is faster than the interval, to finish before the next thread
             self.send_angles(
-                report_function, duration=self.stream_interval * 0.5, threaded=True
+                report_blender, duration=self.stream_interval * 0.5, threaded=True
             )
             return self.stream_interval  # Seconds till next function call
         else:
             return None
 
-    def stream_angles_enable(self, report_function):
+    def stream_angles_enable(self, report_blender):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         if not self.state == State.STREAMING:
             self.state = State.STREAMING
 
             # Create Blender timer
             bpy.app.timers.register(
-                functools.partial(self.stream_angles, report_function)
+                functools.partial(self.stream_angles, report_blender)
             )
 
         else:
-            report_function({"INFO"}, "Streaming is already in progress,")
+            report_blender({"INFO"}, "Streaming is already in progress,")
 
-    def animate_angles(self, report_function):
+    def animate_angles(self, report_blender):
 
-        self.ensure_connection(report_function)
+        self.ensure_connection(report_blender)
 
         if not self.state == State.ANIMATING:
             self.state = State.ANIMATING
@@ -229,7 +229,7 @@ class ReachyMarionette:
             bpy.data.scenes["Scene"].frame_set(frame_prev)
 
             # Get to initial pose
-            self.send_angles(report_function, duration=1.0, threaded=False)
+            self.send_angles(report_blender, duration=1.0, threaded=False)
 
             # Iterate through all keyframes
             while (
@@ -242,12 +242,12 @@ class ReachyMarionette:
                 frame_prev = bpy.data.scenes["Scene"].frame_current
 
                 # Wait for movement to complete before moving on to next keyframe
-                self.send_angles(report_function, duration, threaded=False)
+                self.send_angles(report_blender, duration, threaded=False)
 
             self.state = State.IDLE
 
         else:
-            report_function({"INFO"}, "Animation is already in progress,")
+            report_blender({"INFO"}, "Animation is already in progress,")
 
     def reachy_reset_pose(self):
         joint_angles = {

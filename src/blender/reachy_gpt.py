@@ -38,10 +38,10 @@ class ReachyGPT:
             assistant: {"action": "ReachyWave", "answer": "Hej! Hvordan kan jeg hjælpe?"}
             """
 
-    def activate(self, report_function):
+    def activate(self, report_blender):
 
         if not os.getenv("OPENAI_API_KEY"):
-            report_function(
+            report_blender(
                 {"ERROR"},
                 "No API key detected. Please write API key to OPENAI_API_KEY environment variable. System restart may be required after writing to environment variable.",
             )
@@ -51,7 +51,7 @@ class ReachyGPT:
 
         return True
 
-    def get_gpt_response(self, messages, report_function):
+    def get_gpt_response(self, messages, report_blender):
 
         try:
             # Request response from ChatGPT
@@ -65,7 +65,7 @@ class ReachyGPT:
                 message = json.loads(response.choices[0].message.content)
 
                 if "action" not in message and "answer" not in message:
-                    report_function(
+                    report_blender(
                         {"ERROR"}, "Message not formatted correctly: " + str(message)
                     )
                     return "Sorry, I couldn't generate a response."
@@ -73,29 +73,29 @@ class ReachyGPT:
                 return message
 
             else:
-                report_function({"ERROR"}, "No completion choices returned.")
+                report_blender({"ERROR"}, "No completion choices returned.")
                 return "Sorry, I couldn't generate a response."
 
         except openai.OpenAIError as error:
-            report_function({"ERROR"}, "OpenAI API error: " + str(error))
+            report_blender({"ERROR"}, "OpenAI API error: " + str(error))
             return "Sorry, there was an error with the AI service."
 
         except RequestException as e:
-            report_function({"ERROR"}, "Request error: " + str(error))
+            report_blender({"ERROR"}, "Request error: " + str(error))
             return "Sorry, there was a network issue."
 
         except Exception as error:
-            report_function({"ERROR"}, "Could not send response: " + str(error))
+            report_blender({"ERROR"}, "Could not send response: " + str(error))
             return "Sorry, something went wrong."
 
-    def send_request(self, promt, reachy_object, report_function):
+    def send_request(self, promt, reachy_object, report_blender):
 
         if len(promt) == 0:
-            report_function({"ERROR"}, "Please provide a promt.")
+            report_blender({"ERROR"}, "Please provide a promt.")
             return
 
         if not self.client:
-            report_function(
+            report_blender(
                 {"ERROR"}, "No OpenAI client detected. Please activate client."
             )
             return
@@ -110,16 +110,16 @@ class ReachyGPT:
         self.chat_history.append(message_user)
 
         # Get response from ChatGPT, and send action / animation to Reachy
-        response = self.get_gpt_response(messages, report_function)
+        response = self.get_gpt_response(messages, report_blender)
 
         if response["action"] not in self.action_catalouge:
-            report_function(
+            report_blender(
                 {"ERROR"}, "Response was not an action: " + response["action"]
             )
             response["action"] = "ReachyShrug"
 
-        report_function({"INFO"}, "Chosen action: " + response["action"])
-        report_function({"INFO"}, response["answer"])
+        report_blender({"INFO"}, "Chosen action: " + response["action"])
+        report_blender({"INFO"}, response["answer"])
 
         bpy.context.object.animation_data.action = bpy.data.actions.get(
             response["action"]
@@ -127,12 +127,10 @@ class ReachyGPT:
 
         if reachy_object.reachy != None:
             # Send action to Reachy robot
-            reachy_object.animate_angles(report_function)
+            reachy_object.animate_angles(report_blender)
 
         else:
-            report_function(
-                {"INFO"}, "Reachy not connected, playing animation instead."
-            )
+            report_blender({"INFO"}, "Reachy not connected, playing animation instead.")
 
             # Play animation
             bpy.ops.screen.animation_cancel()
