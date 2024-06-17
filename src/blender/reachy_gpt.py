@@ -90,15 +90,17 @@ class ReachyGPT:
 
     def send_request(self, promt, reachy_object, report_blender):
 
+        response = {"action": "", "answer": ""}  # Mock response
+
         if len(promt) == 0:
             report_blender({"ERROR"}, "Please provide a promt.")
-            return
+            return response
 
         if not self.client:
             report_blender(
                 {"ERROR"}, "No OpenAI client detected. Please activate client."
             )
-            return
+            return response
 
         # Add system promt and recent chat history
         messages = [{"role": "system", "content": self.system_prompt}]
