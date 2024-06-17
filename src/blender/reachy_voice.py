@@ -1,10 +1,13 @@
-from gtts import gTTS
 import io
 import numpy as np
 import os
-import pydub
 import scipy.io.wavfile as wav
 import sounddevice as sd
+import threading
+import time
+
+from gtts import gTTS
+import pydub
 import whisper
 
 
@@ -18,35 +21,70 @@ class ReachyVoice:
         self.model = whisper.load_model(model_name)
         print("Whisper model ready")
 
-    def record_audio(self, file_path: str, duration, report_function):
+        self.recording = False
 
-        report_function({"INFO"}, "Recording...")
+    def record_audio(self, file_path: str, duartion_max=10.0):
+
+        print("Recording...")
 
         samplerate = 44100
-        recording = sd.rec(
-            int(duration * samplerate),
+        audio_data = sd.rec(
+            int(duartion_max * samplerate),
             samplerate=samplerate,
             channels=1,
             dtype="float32",
         )
 
-        sd.wait()  # Wait until the recording is finished
+        start_time = time.time()
 
-        wav.write(file_path, samplerate, recording)
-        report_function({"INFO"}, "Recording saved to " + str(file_path))
+        while self.recording:
+            # Wait until the recording is finished or stopped
 
-    def transcribe_audio(self, file_path: str, report_function, language="en"):
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+
+            if elapsed_time >= duartion_max:
+                self.recording = False
+
+        # Make sure recording is stopped, and data is trimmed to actual length (instead of duration_max)
+        sd.stop()
+        audio_data_trimmed = audio_data[: int(samplerate * elapsed_time)]
+
+        # Clear file
+        open(file_path, "wb").close()
+
+        # Write new data
+        wav.write(file_path, samplerate, audio_data_trimmed)
+        print("Recording saved to " + str(file_path))
+
+    def start_recording(self, report_blender, file_path: str, duration_max):
+
+        if not self.recording:
+            self.recording = True
+
+            thread = threading.Thread(
+                target=self.record_audio, args=[file_path, duration_max]
+            )
+            thread.start()
+
+        else:
+            report_blender({"INFO"}, "Recording is already in progress...")
+
+    def stop_recording(self):
+        self.recording = False
+
+    def transcribe_audio(self, file_path: str, report_blender, language="en"):
 
         if os.path.exists(file_path):
             result = self.model.transcribe(str(file_path), language=language)
             transcription = result["text"]
 
-            report_function({"INFO"}, "Transcription: " + transcription)
+            report_blender({"INFO"}, "Transcription: " + transcription)
 
             return transcription
 
         else:
-            report_function(
+            report_blender(
                 {"ERROR"}, "File path '" + str(file_path) + "' does not exist."
             )
 
@@ -69,6 +107,9 @@ class ReachyVoice:
         return samples, audio.frame_rate
 
     def speak_audio(self, text: str, language="en"):
+
+        if len(text) == 0:
+            return
 
         # Generate audio
         tts = gTTS(text=text, lang=language)
