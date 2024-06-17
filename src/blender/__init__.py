@@ -78,6 +78,9 @@ reachy = ReachyMarionette()
 reachy_gpt = ReachyGPT()
 reachy_voice = ReachyVoice()
 
+# Global constants
+AUDIO_FILE_PATH = "//mic_input.wav"
+
 
 # Classes
 
@@ -105,6 +108,13 @@ class SceneProperties(bpy.types.PropertyGroup):
 
             if reachy.reachy == None:
                 self.Streaming = False
+
+        return
+
+    def callback_recording(self, context):
+
+        if self.Recording:
+            bpy.ops.reachy_marionette.record_audio("INVOKE_DEFAULT")
 
         return
 
@@ -142,6 +152,12 @@ class SceneProperties(bpy.types.PropertyGroup):
 
     Promt: bpy.props.StringProperty(
         name="Promt", description="Promt for ChatGPT", default=""
+    )  # type: ignore (stops warning squiggles)
+
+    Recording: bpy.props.BoolProperty(
+        description="If addon is currently recording audio.",
+        default=False,
+        update=callback_recording,
     )  # type: ignore (stops warning squiggles)
 
 
@@ -279,18 +295,23 @@ class REACHYMARIONETTE_OT_SendRequest(bpy.types.Operator):
 
 
 class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
-    # Select action
+    # Continously get angles from Blender rig, and stream to Reachy
 
     bl_idname = "reachy_marionette.record_audio"
-    bl_label = "Record audio from microphone for 5 seconds."
+    bl_label = "Record audio from microphone."
 
-    def execute(self, context):
-        scene_properties = context.scene.scn_prop
+    def __init__(self):
+        print("Recording started")
 
-        audio_file_path = bpy.path.abspath("//mic_input.wav")
+    def __del__(self):
+        print("Recording processed")
 
-        # Record audio sample
-        reachy_voice.record_audio(audio_file_path, 3, self.report)
+    def process_recording(self, scene_properties):
+
+        reachy_voice.stop_recording()
+        print("Recording ended")
+
+        audio_file_path = bpy.path.abspath(AUDIO_FILE_PATH)
 
         # Convert to text
         transcription = reachy_voice.transcribe_audio(
@@ -303,7 +324,37 @@ class REACHYMARIONETTE_OT_RecordAudio(bpy.types.Operator):
         if scene_properties.Speaker:
             reachy_voice.speak_audio(response["answer"], language="da")
 
-        return {"FINISHED"}
+    def modal(self, context, event):
+        scene_properties = context.scene.scn_prop
+
+        # Sync settings
+        if not reachy_voice.recording:
+            scene_properties.Recording = False
+            self.process_recording(scene_properties)
+            return {"FINISHED"}
+
+        if not scene_properties.Recording:
+            self.report({"INFO"}, "Stopping recording")
+            self.process_recording(scene_properties)
+            return {"FINISHED"}
+
+        if event.type == "ESC":
+            self.report({"INFO"}, "ESC key pressed, stopping recording and processing")
+            return {"FINISHED"}
+
+        return {"PASS_THROUGH"}
+
+    def invoke(self, context, event):
+        context.window_manager.modal_handler_add(self)
+
+        audio_file_path = bpy.path.abspath(AUDIO_FILE_PATH)
+
+        # Record audio sample
+        reachy_voice.start_recording(
+            self.report, file_path=audio_file_path, duration_max=10.0
+        )
+
+        return {"RUNNING_MODAL"}
 
 
 class REACHYMARIONETTE_PT_PanelConnection(bpy.types.Panel):
@@ -414,10 +465,16 @@ class REACHYMARIONETTE_PT_PanelAI(bpy.types.Panel):
 
         elif scene_properties.PromtType == "Speech":
 
-            layout.row().operator(
-                REACHYMARIONETTE_OT_RecordAudio.bl_idname,
-                text="Record Audio",
-                icon="SPEAKER",
+            # layout.row().operator(
+            #     REACHYMARIONETTE_OT_RecordAudio.bl_idname,
+            #     text="Record Audio",
+            #     icon="SPEAKER",
+            # )
+
+            label = "Recording..." if scene_properties.Recording else "Record Audio"
+            icon = "RADIOBUT_ON" if scene_properties.Recording else "RADIOBUT_OFF"
+            layout.prop(
+                scene_properties, "Recording", text=label, icon=icon, toggle=True
             )
 
 
@@ -456,4 +513,5 @@ def unregister():
 
 
 if __name__ == "__main__":
+
     register()
