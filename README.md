@@ -1,6 +1,6 @@
-# ReachyMarionette
+# Energirobotter Reachy Marionette
 
-Copies poses of robot rig in Blender to physical (or simulated) Reachy robot.
+Copies poses of robot rig in Blender to physical (or simulated) Reachy robot by Pollen Robotics.
 
 ![ReachyMarionetteGif](docs/ReachyMarionette.gif)
 
